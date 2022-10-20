@@ -11,6 +11,7 @@ import android.net.ConnectivityManager
 import android.os.IBinder
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
+import im.molly.unifiedpush.helper.UnifiedPushHelper
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
@@ -179,6 +180,7 @@ class IncomingMessageObserver(private val context: Application) {
 
       val registered = SignalStore.account().isRegistered
       val fcmEnabled = SignalStore.account().fcmEnabled
+      val pushEnabled = UnifiedPushHelper.isPushEnabled()
       val hasNetwork = NetworkConstraint.isMet(context)
       val hasProxy = ApplicationDependencies.getNetworkManager().isProxyEnabled
       val forceWebsocket = SignalStore.internalValues().isWebsocketModeForced
@@ -187,6 +189,7 @@ class IncomingMessageObserver(private val context: Application) {
       val removedRequests = keepAliveTokens.entries.removeIf { (_, createTime) -> createTime < keepAliveCutoffTime }
       val decryptQueueEmpty = ApplicationDependencies.getJobManager().isQueueEmpty(PushDecryptMessageJob.QUEUE)
 
+      // Even if unifiedpush is enabled, we start in foreground so this observer is not killed
       if ((!fcmEnabled || forceWebsocket) && registered && !isForegroundService) {
         try {
           startWhenCapable(context, Intent(context, ForegroundService::class.java))
@@ -202,13 +205,13 @@ class IncomingMessageObserver(private val context: Application) {
 
       val lastInteractionString = if (appVisible) "N/A" else timeIdle.toString() + " ms (" + (if (timeIdle < MAX_BACKGROUND_TIME) "within limit" else "over limit") + ")"
       val conclusion = registered &&
-        (appVisible || timeIdle < MAX_BACKGROUND_TIME || !fcmEnabled || Util.hasItems(keepAliveTokens)) &&
+        (appVisible || timeIdle < MAX_BACKGROUND_TIME || !pushEnabled || Util.hasItems(keepAliveTokens)) &&
         hasNetwork &&
         decryptQueueEmpty
 
       val needsConnectionString = if (conclusion) "Needs Connection" else "Does Not Need Connection"
 
-      Log.d(TAG, "[$needsConnectionString] Network: $hasNetwork, Foreground: $appVisible, Time Since Last Interaction: $lastInteractionString, FCM: $fcmEnabled, Stay open requests: [${keepAliveTokens.entries}], Registered: $registered, Proxy: $hasProxy, Force websocket: $forceWebsocket, Decrypt Queue Empty: $decryptQueueEmpty")
+      Log.d(TAG, "[$needsConnectionString] Network: $hasNetwork, Foreground: $appVisible, Time Since Last Interaction: $lastInteractionString, FCM: $fcmEnabled, pushEnabled: $pushEnabled, Stay open requests: [${keepAliveTokens.entries}], Registered: $registered, Proxy: $hasProxy, Force websocket: $forceWebsocket, Decrypt Queue Empty: $decryptQueueEmpty")
       return conclusion
     }
   }
