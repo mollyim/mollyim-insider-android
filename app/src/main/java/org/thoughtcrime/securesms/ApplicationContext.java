@@ -454,7 +454,13 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
     PlayServicesUtil.PlayServicesStatus fcmStatus = PlayServicesUtil.getPlayServicesStatus(this);
 
-    if (fcmStatus == PlayServicesUtil.PlayServicesStatus.DISABLED) {
+    if (UnifiedPushHelper.isUnifiedPushEnabled()) {
+      Log.i(TAG, "UnifiedPush is enabled.");
+      SignalStore.account().setFcmEnabled(false);
+      SignalStore.account().setFcmToken(null);
+      SignalStore.account().setFcmTokenLastSetTime(-1);
+      ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
+    } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.DISABLED) {
       if (SignalStore.account().isFcmEnabled()) {
         Log.i(TAG, "Play Services are disabled. Disabling FCM.");
         SignalStore.account().setFcmEnabled(false);
