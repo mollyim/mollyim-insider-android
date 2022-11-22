@@ -15,7 +15,7 @@ object UnifiedPushHelper{
   fun initializeUnifiedPush() {
     if (SignalStore.account().isRegistered) {
       Log.d(TAG, "Initializing UnifiedPush")
-      val socketUri = MollySocketDevice().socketUri
+      val socketUri = MollySocketDevice().socketUri ?: return
       Log.d(TAG, socketUri)
       registerAppWithDialog(ApplicationDependencies.getApplication())
     }
@@ -23,7 +23,7 @@ object UnifiedPushHelper{
 
   @JvmStatic
   fun isUnifiedPushEnabled(): Boolean {
-    return getDistributor(context).isNotEmpty()
+    return SignalStore.account().isRegistered && getDistributor(context).isNotEmpty()
   }
 
   @JvmStatic

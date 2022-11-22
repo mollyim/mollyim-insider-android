@@ -42,7 +42,11 @@ class MollySocketDevice {
   private fun isMollySocketDevicePresent(): Boolean {
     var devices : List<Device>? = emptyList()
     Thread {
-      devices = DeviceListLoader(context, ApplicationDependencies.getSignalServiceAccountManager()).loadInBackground()
+      try {
+        devices = DeviceListLoader(context, ApplicationDependencies.getSignalServiceAccountManager()).loadInBackground()
+      } catch (e: IOException) {
+        Log.e(TAG, "Encountered an IOException", e)
+      }
     }.apply {
       start()
       join()
@@ -59,21 +63,26 @@ class MollySocketDevice {
     Log.d(TAG, "Creating a device for MollySocket")
 
     Thread {
-      val number = SignalStore.account().e164 ?: return@Thread
-      val password = Util.getSecret(18)
+      try {
+        val number = SignalStore.account().e164 ?: return@Thread
+        val password = Util.getSecret(18)
 
-      val verifyDeviceResponse = verifyNewDevice(number, password)
-      TextSecurePreferences.setMultiDevice(context, true)
+        val verifyDeviceResponse = verifyNewDevice(number, password)
+        TextSecurePreferences.setMultiDevice(context, true)
 
-      generateAndRegisterPreKeys(number, verifyDeviceResponse.deviceId, password)
-      store.saveDeviceId(verifyDeviceResponse.deviceId)
-      store.saveUri(verifyDeviceResponse.uuid, verifyDeviceResponse.deviceId, password)
+        generateAndRegisterPreKeys(number, verifyDeviceResponse.deviceId, password)
+        store.saveDeviceId(verifyDeviceResponse.deviceId)
+        store.saveUri(verifyDeviceResponse.uuid, verifyDeviceResponse.deviceId, password)
+      } catch (e: IOException) {
+        Log.e(TAG, "Encountered an IOException", e)
+      }
     }.apply {
       start()
       join()
     }
   }
 
+  @Throws(IOException::class)
   private fun verifyNewDevice(number: String, password: String): VerifyDeviceResponse {
     val verificationCode = ApplicationDependencies.getSignalServiceAccountManager()
       .newDeviceVerificationCode
