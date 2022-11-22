@@ -1,8 +1,7 @@
 package im.molly.unifiedpush.receiver
 
 import android.content.Context
-import android.os.Handler
-import org.signal.core.util.ThreadUtil.sleep
+import im.molly.unifiedpush.helper.UnifiedPushHelper
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.unifiedpush.android.connector.MessagingReceiver
@@ -27,17 +26,19 @@ class UnifiedPushReceiver: MessagingReceiver() {
   }
 
   override fun onMessage(context: Context, message: ByteArray, instance: String) {
-    Log.d(TAG, "New message")
-    /*Thread {
-      if (Build.VERSION.SDK_INT >= 31) {
-        UnifiedPushFetchManager.enqueue(context, true)
-      } else {
-        UnifiedPushFetchManager.enqueue(context, false)
+    if (UnifiedPushHelper.isUnifiedPushEnabled()) {
+      Log.d(TAG, "New message")
+      /*Thread {
+        if (Build.VERSION.SDK_INT >= 31) {
+          UnifiedPushFetchManager.enqueue(context, true)
+        } else {
+          UnifiedPushFetchManager.enqueue(context, false)
+        }
+      }.start()*/
+      ApplicationDependencies.getIncomingMessageObserver().registerKeepAliveToken(UnifiedPushReceiver::class.java.name)
+      Timer().schedule(TIMEOUT) {
+        ApplicationDependencies.getIncomingMessageObserver().removeKeepAliveToken(UnifiedPushReceiver::class.java.name)
       }
-    }.start()*/
-    ApplicationDependencies.getIncomingMessageObserver().registerKeepAliveToken(UnifiedPushReceiver::class.java.name)
-    Timer().schedule(TIMEOUT){
-      ApplicationDependencies.getIncomingMessageObserver().removeKeepAliveToken(UnifiedPushReceiver::class.java.name)
     }
   }
 }
