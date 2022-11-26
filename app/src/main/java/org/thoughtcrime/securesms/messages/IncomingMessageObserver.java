@@ -165,7 +165,7 @@ public class IncomingMessageObserver {
 
     boolean registered     = SignalStore.account().isRegistered();
     boolean fcmEnabled     = SignalStore.account().isFcmEnabled();
-    boolean pushEnabled    = UnifiedPushHelper.isPushEnabled();
+    boolean pushAvailable  = UnifiedPushHelper.isPushAvailable();
     boolean hasNetwork     = NetworkConstraint.isMet(context);
     boolean hasProxy       = ApplicationDependencies.getNetworkManager().isProxyEnabled();
     boolean forceWebsocket = SignalStore.internalValues().isWebsocketModeForced();
@@ -187,11 +187,11 @@ public class IncomingMessageObserver {
     }
 
     Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, push: %s, Stay open requests: [%s], Censored: %s, Supports websockets: %s, Registered: %s, Proxy: %s, Force websocket: %s",
-                             hasNetwork, appVisible, fcmEnabled, pushEnabled, Util.join(keepAliveTokens.entrySet(), ","), networkAccess.isCensored(), networkAccess.supportsWebsockets(), registered, hasProxy, forceWebsocket));
+                             hasNetwork, appVisible, fcmEnabled, pushAvailable, Util.join(keepAliveTokens.entrySet(), ","), networkAccess.isCensored(), networkAccess.supportsWebsockets(), registered, hasProxy, forceWebsocket));
 
     // If unifiedpush is enabled, the connection is not needed
     return registered &&
-           (appVisible || !pushEnabled || forceWebsocket || Util.hasItems(keepAliveTokens)) &&
+           (appVisible || !pushAvailable || forceWebsocket || Util.hasItems(keepAliveTokens)) &&
            hasNetwork &&
            networkAccess.supportsWebsockets();
   }
