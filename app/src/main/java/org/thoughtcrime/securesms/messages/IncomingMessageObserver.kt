@@ -182,7 +182,7 @@ class IncomingMessageObserver(private val context: Application) {
 
       val registered = SignalStore.account().isRegistered
       val fcmEnabled = SignalStore.account().fcmEnabled
-      val pushEnabled = UnifiedPushHelper.isPushEnabled()
+      val pushAvailable = UnifiedPushHelper.isPushAvailable()
       val hasNetwork = NetworkConstraint.isMet(context)
       val hasProxy = ApplicationDependencies.getNetworkManager().isProxyEnabled
       val forceWebsocket = SignalStore.internalValues().isWebsocketModeForced
@@ -207,13 +207,13 @@ class IncomingMessageObserver(private val context: Application) {
 
       val lastInteractionString = if (appVisible) "N/A" else timeIdle.toString() + " ms (" + (if (timeIdle < MAX_BACKGROUND_TIME) "within limit" else "over limit") + ")"
       val conclusion = registered &&
-        (appVisible || timeIdle < MAX_BACKGROUND_TIME || !pushEnabled || Util.hasItems(keepAliveTokens)) &&
+        (appVisible || timeIdle < MAX_BACKGROUND_TIME || !pushAvailable || Util.hasItems(keepAliveTokens)) &&
         hasNetwork &&
         decryptQueueEmpty
 
       val needsConnectionString = if (conclusion) "Needs Connection" else "Does Not Need Connection"
 
-      Log.d(TAG, "[$needsConnectionString] Network: $hasNetwork, Foreground: $appVisible, Time Since Last Interaction: $lastInteractionString, FCM: $fcmEnabled, pushEnabled: $pushEnabled, Stay open requests: [${keepAliveTokens.entries}], Registered: $registered, Proxy: $hasProxy, Force websocket: $forceWebsocket, Decrypt Queue Empty: $decryptQueueEmpty")
+      Log.d(TAG, "[$needsConnectionString] Network: $hasNetwork, Foreground: $appVisible, Time Since Last Interaction: $lastInteractionString, FCM: $fcmEnabled, pushEnabled: $pushAvailable, Stay open requests: [${keepAliveTokens.entries}], Registered: $registered, Proxy: $hasProxy, Force websocket: $forceWebsocket, Decrypt Queue Empty: $decryptQueueEmpty")
       return conclusion
     }
   }
