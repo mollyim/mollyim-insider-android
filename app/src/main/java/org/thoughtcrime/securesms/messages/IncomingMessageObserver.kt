@@ -11,7 +11,7 @@ import android.net.ConnectivityManager
 import android.os.IBinder
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
-import im.molly.unifiedpush.helper.UnifiedPushHelper
+import im.molly.unifiedpush.util.UnifiedPushHelper
 import kotlinx.collections.immutable.toImmutableSet
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.SignalExecutors
