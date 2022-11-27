@@ -25,4 +25,5 @@
     <string name="UnifiedPushSettingsFragment__strategy">Fetch Strategy</string>
     <string name="UnifiedPushSettingsFragment__strategy_websocket">Websocket</string>
     <string name="UnifiedPushSettingsFragment__strategy_rest">REST</string>
+    <string name="UnifiedPushSettingsFragment__status_summary_internal_error">An internal Error occurred, please try again</string>
 </resources>

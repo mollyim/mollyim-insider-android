@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import im.molly.unifiedpush.model.FetchStrategy
+import im.molly.unifiedpush.util.MollySocketRequest
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.util.livedata.Store
@@ -64,8 +65,11 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
       endpoint = SignalStore.unifiedpush().endpoint,
       mollySocketUrl = SignalStore.unifiedpush().mollySocketUrl,
       mollySocketOk = if (checkingServer) { null } else { SignalStore.unifiedpush().mollySocketOk },
-      fetchStrategy = SignalStore.unifiedpush().fetchStrategy
-    )
+      fetchStrategy = SignalStore.unifiedpush().fetchStrategy,
+      status = UnifiedPushStatus.UNKNOWN,
+    ).apply {
+      setStatus()
+    }
   }
 
   fun setUnifiedPushEnabled(enabled: Boolean) {
@@ -105,15 +109,21 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
 
   private fun registerMollySocketServer() {
     if (with(SignalStore.unifiedpush()) {
-        this.enabled && !this.airGaped && this.endpoint.isNullOrBlank()
+        this.enabled && !this.airGaped && !this.endpoint.isNullOrBlank()
       }) {
       checkingServer = true
       store.update { getState() }
-      //TODO
-      SignalStore.unifiedpush().mollySocketOk = true
-      checkingServer = false
+      Thread {
+        try {
+          SignalStore.unifiedpush().mollySocketOk = MollySocketRequest.discoverMollySocketServer()
+          checkingServer = false
+          store.update { getState() }
+        } catch (e: Exception) {
+          SignalStore.unifiedpush().mollySocketOk = false
+          store.update { getState().apply { status = UnifiedPushStatus.INTERNAL_ERROR } }
+        }
+      }.start()
     }
-    store.update { getState() }
   }
 
   class Factory(private val application: Application) : ViewModelProvider.Factory {
