@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
-import im.molly.unifiedpush.helper.UnifiedPushHelper;
+import im.molly.unifiedpush.util.UnifiedPushHelper;
 
 public class RefreshAttributesJob extends BaseJob {
 

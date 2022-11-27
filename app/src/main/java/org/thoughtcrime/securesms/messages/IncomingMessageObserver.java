@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import im.molly.unifiedpush.helper.UnifiedPushHelper;
+import im.molly.unifiedpush.util.UnifiedPushHelper;
 
 /**
  * The application-level manager of our websocket connection.
