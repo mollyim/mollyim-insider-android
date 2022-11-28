@@ -112,6 +112,7 @@ import java.net.SocketTimeoutException;
 import java.security.Security;
 import java.util.concurrent.TimeUnit;
 
+import im.molly.unifiedpush.jobs.UnifiedPushRefreshJob;
 import io.reactivex.rxjava3.exceptions.OnErrorNotImplementedException;
 import io.reactivex.rxjava3.exceptions.UndeliverableException;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
@@ -184,7 +185,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                             .addBlocking("network-settings", this::initializeNetworkSettings)
                             .addBlocking("first-launch", this::initializeFirstEverAppLaunch)
                             .addBlocking("gcm-check", this::initializeFcmCheck)
-                            .addBlocking("unifiedpush", UnifiedPushHelper::initializeUnifiedPush)
                             .addBlocking("app-migrations", this::initializeApplicationMigrations)
                             .addBlocking("ring-rtc", this::initializeRingRtc)
                             .addBlocking("mark-registration", () -> RegistrationUtil.maybeMarkRegistrationComplete(this))
@@ -447,7 +447,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     }
   }
 
-  private void initializeFcmCheck() {
+  public void initializeFcmCheck() {
     if (!SignalStore.account().isRegistered()) {
       return;
     }
@@ -456,6 +456,10 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
     if (UnifiedPushHelper.isUnifiedPushAvailable()
         || fcmStatus == PlayServicesUtil.PlayServicesStatus.DISABLED) {
+      if (!SignalStore.unifiedpush().getAirGaped()) {
+        ApplicationDependencies.getJobManager().add(new UnifiedPushRefreshJob());
+      }
+      ApplicationDependencies.getJobManager().cancel(new FcmRefreshJob().getId());
       if (SignalStore.account().isFcmEnabled()) {
         Log.i(TAG, "Play Services are disabled. Disabling FCM.");
         SignalStore.account().setFcmEnabled(false);
@@ -470,10 +474,12 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                SignalStore.account().getFcmTokenLastSetTime() < 0) {
       Log.i(TAG, "Play Services are newly-available. Updating to use FCM.");
       SignalStore.account().setFcmEnabled(true);
+      ApplicationDependencies.getJobManager().cancel(new UnifiedPushRefreshJob().getId());
       ApplicationDependencies.getJobManager().startChain(new FcmRefreshJob())
                                              .then(new RefreshAttributesJob())
                                              .enqueue();
     } else {
+      ApplicationDependencies.getJobManager().cancel(new UnifiedPushRefreshJob().getId());
       long nextSetTime = SignalStore.account().getFcmTokenLastSetTime() + TimeUnit.HOURS.toMillis(6);
 
       if (SignalStore.account().getFcmToken() == null || nextSetTime <= System.currentTimeMillis()) {
