@@ -35,4 +35,10 @@ object UnifiedPushHelper{
   fun isPushAvailable(): Boolean {
     return SignalStore.account().fcmEnabled || isUnifiedPushAvailable()
   }
+
+  fun checkDistributorPresence() {
+    if (UnifiedPush.getDistributor(context).isEmpty()) {
+      SignalStore.unifiedpush().endpoint = null
+    }
+  }
 }
