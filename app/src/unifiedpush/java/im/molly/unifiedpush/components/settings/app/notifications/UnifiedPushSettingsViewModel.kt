@@ -95,16 +95,20 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
   fun setUnifiedPushEnabled(enabled: Boolean) {
     if (enabled) {
       UnifiedPush.getDistributors(application).getOrNull(0)?.let {
-        UnifiedPush.saveDistributor(application, it)
-        UnifiedPush.registerApp(application)
-        UnifiedPushHelper.initializeMollySocketLinkedDevice()
+        status = UnifiedPushStatus.PENDING
+        Thread {
+          UnifiedPush.saveDistributor(application, it)
+          UnifiedPush.registerApp(application)
+          UnifiedPushHelper.initializeMollySocketLinkedDevice()
+          registerMollySocketServer()
+        }.start()
         // Do not enable if there is no distributor
       } ?: return
     } else {
       UnifiedPush.unregisterApp(application)
     }
     SignalStore.unifiedpush().enabled = enabled
-    registerMollySocketServer()
+    store.update { getState() }
   }
 
   fun setUnifiedPushAirGaped(airGaped: Boolean) {
