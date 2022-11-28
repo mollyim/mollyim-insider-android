@@ -1,11 +1,13 @@
 package im.molly.unifiedpush.components.settings.app.notifications
 
+import android.content.BroadcastReceiver
 import android.content.DialogInterface
 import android.content.res.Resources
 import android.text.InputType
 import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.lifecycle.ViewModelProvider
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.UnifiedPushStatus
@@ -23,6 +25,7 @@ import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
 class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSettingsFragment__unifiedpush) {
 
   private lateinit var viewModel: UnifiedPushSettingsViewModel
+  private var broadcastReceiverRegistered = false
 
   override fun bindAdapter(adapter: MappingAdapter) {
     val factory = UnifiedPushSettingsViewModel.Factory(requireActivity().application)
@@ -32,6 +35,27 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
     viewModel.state.observe(viewLifecycleOwner) {
       adapter.submitList(getConfiguration(it).toMappingModelList())
     }
+    if (!broadcastReceiverRegistered) {
+      broadcastReceiverRegistered = true
+      LocalBroadcastManager.getInstance(requireContext())
+        .registerReceiver(viewModel.broadcastReceiver, viewModel.intentFilter)
+    }
+  }
+
+  override fun onResume() {
+    if (!broadcastReceiverRegistered) {
+      broadcastReceiverRegistered = true
+      LocalBroadcastManager.getInstance(requireContext())
+        .registerReceiver(viewModel.broadcastReceiver, viewModel.intentFilter)
+    }
+    super.onResume()
+  }
+
+  override fun onPause() {
+    LocalBroadcastManager.getInstance(requireContext())
+      .unregisterReceiver(viewModel.broadcastReceiver)
+    broadcastReceiverRegistered = false
+    super.onPause()
   }
 
   private fun getConfiguration(state: UnifiedPushSettingsState): DSLConfiguration {
