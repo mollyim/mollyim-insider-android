@@ -3,18 +3,23 @@ package im.molly.unifiedpush.store
 import android.content.Context
 import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.MollyDevice
+import im.molly.unifiedpush.model.UnifiedPushStatus
 import im.molly.unifiedpush.model.toFetchStrategy
 import im.molly.unifiedpush.model.toInt
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.keyvalue.SignalStore
 
 class UnifiedPushValues {
-  private val PREF_MASTER = "unifiedpush"
+  private val PREF_MASTER = "unifiedpush.mollysocket"
   private val MOLLYSOCKET_UUID = "unifiedpush.mollysocket.uuid"
   private val MOLLYSOCKET_DEVICE_ID = "unifiedpush.mollysocket.deviceId"
   private val MOLLYSOCKET_PASSWORD = "unifiedpush.mollysocket.password"
   private val MOLLYSOCKET_URL = "unifiedpush.mollysocket.url"
   private val MOLLYSOCKET_OK = "unifiedpush.mollysocket.ok"
   private val MOLLYSOCKET_FETCH_METHOD = "unifiedpush.mollysocket.fetch_method"
+  private val MOLLYSOCKET_FORBIDDEN_UUID = "unifiedpush.mollysocket.forbidden_uuid"
+  private val MOLLYSOCKET_FORBIDDEN_ENDPOINT = "unifiedpush.mollysocket.forbidden_endpoint"
+  private val MOLLYSOCKET_INTERNAL_ERROR = "unifiedpush.mollysocket.internal_error"
   private val UNIFIEDPUSH_ENDPOINT = "unifiedpush.endpoint"
   private val UNIFIEDPUSH_ENABLED = "unifiedpush.enabled"
   private val UNIFIEDPUSH_AIR_GAPED = "unifiedpush.air_gaped"
@@ -66,11 +71,36 @@ class UnifiedPushValues {
         prefs.edit().putString(MOLLYSOCKET_URL, value).apply()
       }
 
-  var mollySocketOk: Boolean
+  var mollySocketFound: Boolean
     get() = prefs.getBoolean(MOLLYSOCKET_OK, false)
     set(value) = prefs.edit().putBoolean(MOLLYSOCKET_OK, value).apply()
 
   var fetchStrategy: FetchStrategy
     get() = prefs.getInt(MOLLYSOCKET_FETCH_METHOD, 0).toFetchStrategy()
     set(value) = prefs.edit().putInt(MOLLYSOCKET_FETCH_METHOD, value.toInt()).apply()
+
+  var forbiddenUuid: Boolean
+    get() = prefs.getBoolean(MOLLYSOCKET_FORBIDDEN_UUID, true)
+    set(value) = prefs.edit().putBoolean(MOLLYSOCKET_FORBIDDEN_UUID, value).apply()
+
+  var forbiddenEndpoint: Boolean
+    get() = prefs.getBoolean(MOLLYSOCKET_FORBIDDEN_ENDPOINT, true)
+    set(value) = prefs.edit().putBoolean(MOLLYSOCKET_FORBIDDEN_ENDPOINT, value).apply()
+
+  var mollySocketInternalError: Boolean
+    get() = prefs.getBoolean(MOLLYSOCKET_INTERNAL_ERROR, true)
+    set(value) = prefs.edit().putBoolean(MOLLYSOCKET_INTERNAL_ERROR, value).apply()
+
+  val status: UnifiedPushStatus
+    get() = when {
+        !SignalStore.unifiedpush().enabled -> UnifiedPushStatus.DISABLED
+        SignalStore.unifiedpush().device == null -> UnifiedPushStatus.LINK_DEVICE_ERROR
+        SignalStore.unifiedpush().endpoint == null -> UnifiedPushStatus.MISSING_ENDPOINT
+        SignalStore.unifiedpush().airGaped -> UnifiedPushStatus.AIR_GAPED
+        SignalStore.unifiedpush().mollySocketUrl.isNullOrBlank() ||
+          !SignalStore.unifiedpush().mollySocketFound -> UnifiedPushStatus.SERVER_NOT_FOUND_AT_URL
+        SignalStore.unifiedpush().forbiddenUuid -> UnifiedPushStatus.FORBIDDEN_UUID
+        SignalStore.unifiedpush().forbiddenEndpoint -> UnifiedPushStatus.FORBIDDEN_ENDPOINT
+        else -> UnifiedPushStatus.OK
+      }
 }
