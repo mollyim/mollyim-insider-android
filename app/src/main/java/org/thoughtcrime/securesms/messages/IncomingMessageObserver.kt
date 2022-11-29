@@ -76,7 +76,8 @@ class IncomingMessageObserver(private val context: Application) {
   private val connectionNecessarySemaphore = Semaphore(0)
 
   private var appVisible = false
-  private var isForegroundService = false
+  var isForegroundService = false
+      private set
   private var lastInteractionTime: Long = System.currentTimeMillis()
 
   @Volatile
@@ -192,13 +193,14 @@ class IncomingMessageObserver(private val context: Application) {
 
     val registered = SignalStore.account().isRegistered
     val fcmEnabled = SignalStore.account().fcmEnabled
+    val pushRequireForeground = UnifiedPushHelper.pushRequireForeground()
     val pushAvailable = UnifiedPushHelper.isPushAvailable()
     val hasNetwork = NetworkConstraint.isMet(context)
     val hasProxy = ApplicationDependencies.getNetworkManager().isProxyEnabled
     val forceWebsocket = SignalStore.internalValues().isWebsocketModeForced
     val decryptQueueEmpty = ApplicationDependencies.getJobManager().isQueueEmpty(PushDecryptMessageJob.QUEUE)
 
-    if ((!pushAvailable || forceWebsocket) && registered && !isForegroundService) {
+    if ((!pushRequireForeground || forceWebsocket) && registered && !isForegroundService) {
       try {
         startWhenCapable(context, Intent(context, ForegroundService::class.java))
         isForegroundService = true
