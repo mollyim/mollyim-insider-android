@@ -78,7 +78,7 @@ object MollySocketRequest {
         )
       } ?: return RegistrationStatus.NO_DEVICE
 
-      val url = URL(SignalStore.unifiedpush().mollySocketUrl + "/signal")
+      val url = URL(SignalStore.unifiedpush().mollySocketUrl)
       val postBody = RequestBody.create(JsonMediaType, JsonUtils.toJson(data))
       val request = Request.Builder().url(url).post(postBody).build()
       val client = ApplicationDependencies.getOkHttpClient().newBuilder().build()
