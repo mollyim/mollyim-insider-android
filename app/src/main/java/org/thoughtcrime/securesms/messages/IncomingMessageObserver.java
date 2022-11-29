@@ -68,6 +68,10 @@ public class IncomingMessageObserver {
   private boolean appVisible;
   private boolean isForegroundService;
 
+  public boolean isForegroundService() {
+    return isForegroundService;
+  }
+
   private volatile boolean networkDrained;
   private volatile boolean decryptionDrained;
   private volatile boolean terminated;
@@ -165,6 +169,7 @@ public class IncomingMessageObserver {
 
     boolean registered     = SignalStore.account().isRegistered();
     boolean fcmEnabled     = SignalStore.account().isFcmEnabled();
+    boolean pushRequireForeground = UnifiedPushHelper.pushRequireForeground();
     boolean pushAvailable  = UnifiedPushHelper.isPushAvailable();
     boolean hasNetwork     = NetworkConstraint.isMet(context);
     boolean hasProxy       = ApplicationDependencies.getNetworkManager().isProxyEnabled();
@@ -172,7 +177,7 @@ public class IncomingMessageObserver {
     long    oldRequest     = System.currentTimeMillis() - OLD_REQUEST_WINDOW_MS;
 
     // Even if unifiedpush is enabled, we start in foreground so this observer is not killed
-    if ((!fcmEnabled || forceWebsocket) && registered && !isForegroundService) {
+    if ((pushRequireForeground || forceWebsocket) && registered && !isForegroundService) {
       try {
         ForegroundServiceUtil.startWhenCapable(context, new Intent(context, ForegroundService.class));
         isForegroundService = true;
@@ -186,10 +191,12 @@ public class IncomingMessageObserver {
       Log.d(TAG, "Removed old keep web socket open requests.");
     }
 
-    Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, push: %s, Stay open requests: [%s], Censored: %s, Supports websockets: %s, Registered: %s, Proxy: %s, Force websocket: %s",
-                             hasNetwork, appVisible, fcmEnabled, pushAvailable, Util.join(keepAliveTokens.entrySet(), ","), networkAccess.isCensored(), networkAccess.supportsWebsockets(), registered, hasProxy, forceWebsocket));
+    Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, pushRequireForeground: %s, pushAvailable: %s, Stay open requests: [%s], Censored: %s, Supports websockets: %s, Registered: %s, Proxy: %s, Force websocket: %s",
+                             hasNetwork, appVisible, fcmEnabled, pushRequireForeground, pushAvailable, Util.join(keepAliveTokens.entrySet(), ","), networkAccess.isCensored(), networkAccess.supportsWebsockets(), registered, hasProxy, forceWebsocket));
 
-    // If unifiedpush is enabled, the connection is not needed
+    // If fcm or unifiedpush is enabled: the constantly running connection is not needed.
+    // The websocket strategy for unifiedpush adds an item in keepAliveTokens for 20secondes,
+    // So the connection is running for 20secondes.
     return registered &&
            (appVisible || !pushAvailable || forceWebsocket || Util.hasItems(keepAliveTokens)) &&
            hasNetwork &&
