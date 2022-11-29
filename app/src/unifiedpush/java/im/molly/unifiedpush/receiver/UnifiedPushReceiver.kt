@@ -2,14 +2,17 @@ package im.molly.unifiedpush.receiver
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import im.molly.unifiedpush.components.settings.app.notifications.BROADCAST_NEW_ENDPOINT
+import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.UnifiedPushStatus
 import im.molly.unifiedpush.model.saveStatus
 import im.molly.unifiedpush.util.MollySocketRequest
 import im.molly.unifiedpush.util.UnifiedPushHelper
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.gcm.FcmFetchManager
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.unifiedpush.android.connector.MessagingReceiver
 import java.util.Timer
@@ -59,18 +62,37 @@ class UnifiedPushReceiver: MessagingReceiver() {
 
   override fun onMessage(context: Context, message: ByteArray, instance: String) {
     if (UnifiedPushHelper.isUnifiedPushAvailable()) {
-      Log.d(TAG, "New message")
-      /*Thread {
-        if (Build.VERSION.SDK_INT >= 31) {
-          UnifiedPushFetchManager.enqueue(context, true)
-        } else {
-          UnifiedPushFetchManager.enqueue(context, false)
-        }
-      }.start()*/
-      ApplicationDependencies.getIncomingMessageObserver().registerKeepAliveToken(UnifiedPushReceiver::class.java.name)
-      Timer().schedule(TIMEOUT) {
-        ApplicationDependencies.getIncomingMessageObserver().removeKeepAliveToken(UnifiedPushReceiver::class.java.name)
+      when (SignalStore.unifiedpush().fetchStrategy) {
+        FetchStrategy.WEBSOCKET -> messageWebSocket()
+        FetchStrategy.REST -> messageRest(context)
       }
+      Log.d(TAG, "New message")
+    }
+  }
+
+  fun messageRest(context: Context) {
+    Thread {
+      val enqueueSuccessful = try {
+        if (Build.VERSION.SDK_INT >= 31) {
+          FcmFetchManager.enqueue(context, true)
+        } else {
+          FcmFetchManager.enqueue(context, false)
+        }
+      } catch (e: Exception) {
+        Log.w(TAG, "Failed to start service.", e)
+        false
+      }
+      if (!enqueueSuccessful) {
+        Log.w(TAG, "Unable to start service. Falling back to legacy approach.")
+        FcmFetchManager.retrieveMessages(context)
+      }
+    }.start()
+  }
+
+  private fun messageWebSocket() {
+    ApplicationDependencies.getIncomingMessageObserver().registerKeepAliveToken(UnifiedPushReceiver::class.java.name)
+    Timer().schedule(TIMEOUT) {
+      ApplicationDependencies.getIncomingMessageObserver().removeKeepAliveToken(UnifiedPushReceiver::class.java.name)
     }
   }
 }

@@ -16,6 +16,7 @@ import im.molly.unifiedpush.util.MollySocketRequest
 import im.molly.unifiedpush.util.UnifiedPushHelper
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
+import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.util.livedata.Store
 import org.unifiedpush.android.connector.UnifiedPush
@@ -34,7 +35,7 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
   val broadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
       when (intent?.action) {
-        BROADCAST_NEW_ENDPOINT -> store.update { getState() }
+        BROADCAST_NEW_ENDPOINT -> processNewStatus()
       }
     }
   }
@@ -93,32 +94,33 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
   }
 
   fun setUnifiedPushEnabled(enabled: Boolean) {
+    SignalStore.unifiedpush().enabled = enabled
     if (enabled) {
       UnifiedPush.getDistributors(application).getOrNull(0)?.let {
         status = UnifiedPushStatus.PENDING
+        store.update { getState() }
         Thread {
           UnifiedPush.saveDistributor(application, it)
           UnifiedPush.registerApp(application)
           UnifiedPushHelper.initializeMollySocketLinkedDevice()
-          registerMollySocketServer()
+          processNewStatus()
         }.start()
         // Do not enable if there is no distributor
       } ?: return
     } else {
       UnifiedPush.unregisterApp(application)
+      processNewStatus()
     }
-    SignalStore.unifiedpush().enabled = enabled
-    store.update { getState() }
   }
 
   fun setUnifiedPushAirGaped(airGaped: Boolean) {
     SignalStore.unifiedpush().airGaped = airGaped
-    registerMollySocketServer()
+    processNewStatus()
   }
 
   fun setFetchStrategy(strategy: FetchStrategy) {
     SignalStore.unifiedpush().fetchStrategy = strategy
-    registerMollySocketServer()
+    processNewStatus()
   }
 
   fun setUnifiedPushDistributor(distributor: String) {
@@ -129,10 +131,21 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
 
   fun setMollySocketUrl(url: String?) {
     SignalStore.unifiedpush().mollySocketUrl = url
-    registerMollySocketServer()
+    processNewStatus()
   }
 
-  private fun registerMollySocketServer() {
+  private fun restartServiceIfNeeded() {
+    if (
+      (UnifiedPushHelper.pushRequireForeground() && !ApplicationDependencies.getIncomingMessageObserver().isForegroundService) ||
+      (!UnifiedPushHelper.pushRequireForeground() && ApplicationDependencies.getIncomingMessageObserver().isForegroundService)
+    ) {
+      ApplicationDependencies.getIncomingMessageObserver().stopForegroundService()
+      ApplicationDependencies.closeConnections()
+      ApplicationDependencies.getIncomingMessageObserver()
+    }
+  }
+
+  private fun processNewStatus() {
     status = SignalStore.unifiedpush().status
     if (SignalStore.unifiedpush().status in listOf(
         UnifiedPushStatus.OK,
@@ -148,6 +161,7 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
             SignalStore.unifiedpush().mollySocketFound = true
             MollySocketRequest.registerToMollySocketServer().saveStatus()
             status = SignalStore.unifiedpush().status
+            restartServiceIfNeeded()
           } else {
             SignalStore.unifiedpush().mollySocketFound = false
             status = SignalStore.unifiedpush().status
@@ -160,6 +174,7 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
       }.start()
     } else {
       status = SignalStore.unifiedpush().status
+      restartServiceIfNeeded()
     }
     store.update { getState() }
   }
