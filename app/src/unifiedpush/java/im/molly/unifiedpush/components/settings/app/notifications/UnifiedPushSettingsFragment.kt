@@ -74,16 +74,24 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
 
       if (state.enabled) {
 
-        switchPref(
-          title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__air_gaped)),
-          isChecked = state.airGaped,
-          onClick = {
-            viewModel.setUnifiedPushAirGaped(!state.airGaped)
-          }
+        radioListPref(
+          title = DSLSettingsText.from(R.string.UnifiedPushSettingsFragment__method),
+          listItems = state.distributors.map { it.name }.toTypedArray(),
+          selected = state.selected,
+          onSelected = {
+            viewModel.setUnifiedPushDistributor(state.distributors[it].applicationId)
+          },
+        )
+
+        dividerPref()
+
+        sectionHeaderPref(R.string.UnifiedPushSettingsFragment__strategy_header)
+
+        textPref(
+          summary = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__strategy_summary))
         )
 
         radioListPref(
-
           title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__strategy)),
           listItems = listOf(getString(R.string.UnifiedPushSettingsFragment__strategy_websocket), getString(R.string.UnifiedPushSettingsFragment__strategy_rest)).toTypedArray(),
           selected = state.fetchStrategy.toInt(),
@@ -92,20 +100,18 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
           },
         )
 
-        val distributors = {
-          radioListPref(
-            title = DSLSettingsText.from(R.string.UnifiedPushSettingsFragment__method),
-            listItems = state.distributors.map { it.name }.toTypedArray(),
-            selected = state.selected,
-            onSelected = {
-              viewModel.setUnifiedPushDistributor(state.distributors[it].applicationId)
-            },
-          )
-        }
+        dividerPref()
+
+        switchPref(
+          title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__air_gaped)),
+          summary = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__air_gaped_summary)),
+          isChecked = state.airGaped,
+          onClick = {
+            viewModel.setUnifiedPushAirGaped(!state.airGaped)
+          }
+        )
 
         if (state.airGaped) {
-
-          distributors()
 
           clickPref(
             title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__server_parameters)),
@@ -131,8 +137,6 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
             iconEnd = getMollySocketUrlIcon(state),
             onClick = { urlDialog(state) },
           )
-
-          distributors()
         }
       }
     }
