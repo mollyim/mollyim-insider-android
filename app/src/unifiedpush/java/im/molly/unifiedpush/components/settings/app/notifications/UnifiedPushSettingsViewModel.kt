@@ -130,7 +130,13 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
   }
 
   fun setMollySocketUrl(url: String?) {
-    SignalStore.unifiedpush().mollySocketUrl = url
+    SignalStore.unifiedpush().mollySocketUrl = if (url.isNullOrBlank()) {
+      null
+    } else if (url.last() != '/') {
+      "$url/"
+    } else {
+      url
+    }
     processNewStatus()
   }
 
