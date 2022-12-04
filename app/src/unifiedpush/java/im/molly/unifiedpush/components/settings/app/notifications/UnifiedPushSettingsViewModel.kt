@@ -15,6 +15,7 @@ import im.molly.unifiedpush.model.saveStatus
 import im.molly.unifiedpush.util.MollySocketRequest
 import im.molly.unifiedpush.util.UnifiedPushHelper
 import org.signal.core.util.logging.Log
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.thoughtcrime.securesms.keyvalue.SignalStore
@@ -149,6 +150,7 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
       ApplicationDependencies.closeConnections()
       ApplicationDependencies.getIncomingMessageObserver()
     }
+    ApplicationContext().initializeFcmCheck()
   }
 
   private fun processNewStatus() {
