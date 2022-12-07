@@ -3,6 +3,7 @@ package im.molly.unifiedpush.receiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.PowerManager
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import im.molly.unifiedpush.components.settings.app.notifications.BROADCAST_NEW_ENDPOINT
 import im.molly.unifiedpush.model.FetchStrategy
@@ -21,6 +22,7 @@ import kotlin.concurrent.schedule
 class UnifiedPushReceiver: MessagingReceiver() {
   private val TAG = Log.tag(UnifiedPushReceiver::class.java)
   private val TIMEOUT = 20_000L //20secs
+  private val WAKE_LOCK_TAG = "${UnifiedPushReceiver::class.java}::wake_lock"
 
   override fun onNewEndpoint(context: Context, endpoint: String, instance: String) {
     Log.d(TAG, "New endpoint: $endpoint")
@@ -72,6 +74,11 @@ class UnifiedPushReceiver: MessagingReceiver() {
 
   fun messageRest(context: Context) {
     Thread {
+      val wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
+        newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG).apply {
+          acquire(5000L /*5secs*/)
+        }
+      }
       val enqueueSuccessful = try {
         if (Build.VERSION.SDK_INT >= 31) {
           FcmFetchManager.enqueue(context, true)
@@ -85,6 +92,11 @@ class UnifiedPushReceiver: MessagingReceiver() {
       if (!enqueueSuccessful) {
         Log.w(TAG, "Unable to start service. Falling back to legacy approach.")
         FcmFetchManager.retrieveMessages(context)
+      }
+      wakeLock?.let {
+        if (it.isHeld) {
+          it.release()
+        }
       }
     }.start()
   }
