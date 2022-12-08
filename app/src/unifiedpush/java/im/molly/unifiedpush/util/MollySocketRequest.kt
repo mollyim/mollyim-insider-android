@@ -2,6 +2,7 @@ package im.molly.unifiedpush.util
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonMappingException
 import im.molly.unifiedpush.model.RegistrationStatus
 import okhttp3.MediaType
@@ -58,7 +59,8 @@ object MollySocketRequest {
       return when (e) {
         is MalformedURLException,
         is JsonParseException,
-        is JsonMappingException -> false
+        is JsonMappingException,
+        is JsonProcessingException -> false
         else -> throw IOException("Can not check server status")
       }
     }
