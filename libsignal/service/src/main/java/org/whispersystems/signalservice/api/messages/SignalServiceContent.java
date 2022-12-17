@@ -85,6 +85,7 @@ import javax.annotation.Nullable;
   private final String                    serverUuid;
   private final Optional<byte[]>          groupId;
   private final String                    destinationUuid;
+  private final String                    updatedPni;
 
   private final Optional<SignalServiceDataMessage>         message;
   private final Optional<SignalServiceSyncMessage>         synchronizeMessage;
@@ -108,6 +109,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -119,6 +121,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.ofNullable(message);
@@ -144,6 +147,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -155,6 +159,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -180,6 +185,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -191,6 +197,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -216,6 +223,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -227,6 +235,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -252,6 +261,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -263,6 +273,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -288,6 +299,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -299,6 +311,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -323,6 +336,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -334,6 +348,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -358,6 +373,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -369,6 +385,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -394,6 +411,7 @@ import javax.annotation.Nullable;
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -405,6 +423,7 @@ import javax.annotation.Nullable;
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -490,6 +509,10 @@ import javax.annotation.Nullable;
     return destinationUuid;
   }
 
+  public String getUpdatedPni() {
+    return updatedPni;
+  }
+
   public byte[] serialize() {
     return serializedState.toByteArray();
   }
@@ -554,6 +577,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasSyncMessage() && localAddress.matches(metadata.getSender())) {
         return new SignalServiceContent(createSynchronizeMessage(metadata, message.getSyncMessage()),
@@ -568,6 +592,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasCallMessage()) {
         return new SignalServiceContent(createCallMessage(message.getCallMessage()),
@@ -582,6 +607,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasReceiptMessage()) {
         return new SignalServiceContent(createReceiptMessage(metadata, message.getReceiptMessage()),
@@ -596,6 +622,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasTypingMessage()) {
         return new SignalServiceContent(createTypingMessage(metadata, message.getTypingMessage()),
@@ -610,6 +637,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasDecryptionErrorMessage()) {
         return new SignalServiceContent(createDecryptionErrorMessage(metadata, message.getDecryptionErrorMessage()),
@@ -624,6 +652,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasStoryMessage()) {
         return new SignalServiceContent(createStoryMessage(message.getStoryMessage()),
@@ -638,6 +667,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (pniSignatureMessage.isPresent()) {
         return new SignalServiceContent(pniSignatureMessage.get(),
@@ -651,6 +681,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (senderKeyDistributionMessage.isPresent()) {
         // IMPORTANT: This block should always be last, since you can pair SKDM's with other content
@@ -665,6 +696,7 @@ import javax.annotation.Nullable;
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       }
     }
@@ -998,6 +1030,14 @@ import javax.annotation.Nullable;
 
     if (content.hasContacts()) {
       return SignalServiceSyncMessage.forContacts(new ContactsMessage(createAttachmentPointer(content.getContacts().getBlob()), content.getContacts().getComplete()));
+    }
+
+    if (content.hasPniIdentity()) {
+      return SignalServiceSyncMessage.forPniIdentity(content.getPniIdentity());
+    }
+
+    if (content.hasPniChangeNumber()) {
+      return SignalServiceSyncMessage.forPniChangeNumber(content.getPniChangeNumber());
     }
 
     if (content.hasCallEvent()) {
