@@ -86,6 +86,7 @@ public final class SignalServiceContent {
   private final String                    serverUuid;
   private final Optional<byte[]>          groupId;
   private final String                    destinationUuid;
+  private final String                    updatedPni;
 
   private final Optional<SignalServiceDataMessage>         message;
   private final Optional<SignalServiceSyncMessage>         synchronizeMessage;
@@ -110,6 +111,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -121,6 +123,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.ofNullable(message);
@@ -147,6 +150,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -158,6 +162,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -184,6 +189,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -195,6 +201,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -221,6 +228,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -232,6 +240,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -258,6 +267,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -269,6 +279,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -295,6 +306,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -306,6 +318,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -331,6 +344,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -342,6 +356,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -367,6 +382,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -378,6 +394,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -404,6 +421,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -415,6 +433,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -441,6 +460,7 @@ public final class SignalServiceContent {
                                String serverUuid,
                                Optional<byte[]> groupId,
                                String destinationUuid,
+                               String updatedPni,
                                SignalServiceContentProto serializedState)
   {
     this.sender                   = sender;
@@ -452,6 +472,7 @@ public final class SignalServiceContent {
     this.serverUuid               = serverUuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid;
+    this.updatedPni               = updatedPni;
     this.serializedState          = serializedState;
 
     this.message                      = Optional.empty();
@@ -542,6 +563,10 @@ public final class SignalServiceContent {
     return destinationUuid;
   }
 
+  public String getUpdatedPni() {
+    return updatedPni;
+  }
+
   public byte[] serialize() {
     return serializedState.toByteArray();
   }
@@ -606,6 +631,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasSyncMessage() && localAddress.matches(metadata.getSender())) {
         return new SignalServiceContent(createSynchronizeMessage(metadata, message.getSyncMessage()),
@@ -620,6 +646,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasCallMessage()) {
         return new SignalServiceContent(createCallMessage(message.getCallMessage()),
@@ -634,6 +661,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasReceiptMessage()) {
         return new SignalServiceContent(createReceiptMessage(metadata, message.getReceiptMessage()),
@@ -648,6 +676,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasTypingMessage()) {
         return new SignalServiceContent(createTypingMessage(metadata, message.getTypingMessage()),
@@ -662,6 +691,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasDecryptionErrorMessage()) {
         return new SignalServiceContent(createDecryptionErrorMessage(metadata, message.getDecryptionErrorMessage()),
@@ -676,6 +706,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasStoryMessage()) {
         return new SignalServiceContent(createStoryMessage(message.getStoryMessage()),
@@ -690,6 +721,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (pniSignatureMessage.isPresent()) {
         return new SignalServiceContent(pniSignatureMessage.get(),
@@ -703,6 +735,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (message.hasEditMessage()) {
         return new SignalServiceContent(createEditMessage(metadata, message.getEditMessage()),
@@ -717,6 +750,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       } else if (senderKeyDistributionMessage.isPresent()) {
         // IMPORTANT: This block should always be last, since you can pair SKDM's with other content
@@ -731,6 +765,7 @@ public final class SignalServiceContent {
                                         metadata.getServerGuid(),
                                         metadata.getGroupId(),
                                         metadata.getDestinationUuid(),
+                                        metadata.getUpdatedPni(),
                                         serviceContentProto);
       }
     }
@@ -1066,6 +1101,14 @@ public final class SignalServiceContent {
 
     if (content.hasContacts()) {
       return SignalServiceSyncMessage.forContacts(new ContactsMessage(createAttachmentPointer(content.getContacts().getBlob()), content.getContacts().getComplete()));
+    }
+
+    if (content.hasPniIdentity()) {
+      return SignalServiceSyncMessage.forPniIdentity(content.getPniIdentity());
+    }
+
+    if (content.hasPniChangeNumber()) {
+      return SignalServiceSyncMessage.forPniChangeNumber(content.getPniChangeNumber());
     }
 
     if (content.hasCallEvent()) {
