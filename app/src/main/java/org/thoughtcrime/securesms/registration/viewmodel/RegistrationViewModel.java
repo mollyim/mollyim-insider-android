@@ -12,6 +12,7 @@ import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.pin.KbsRepository;
 import org.thoughtcrime.securesms.pin.TokenData;
+import org.thoughtcrime.securesms.registration.LinkDeviceRepository;
 import org.thoughtcrime.securesms.registration.RegistrationData;
 import org.thoughtcrime.securesms.registration.RegistrationRepository;
 import org.thoughtcrime.securesms.registration.RequestVerificationCodeResponseProcessor;
@@ -22,6 +23,7 @@ import org.thoughtcrime.securesms.registration.VerifyResponseWithRegistrationLoc
 import org.thoughtcrime.securesms.registration.VerifyResponseWithoutKbs;
 import org.thoughtcrime.securesms.util.Util;
 import org.whispersystems.signalservice.api.KbsPinData;
+import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.internal.ServiceResponse;
 
 import java.util.Objects;
@@ -34,21 +36,26 @@ public final class RegistrationViewModel extends BaseRegistrationViewModel {
   private static final String STATE_RESTORE_FLOW_SHOWN = "RESTORE_FLOW_SHOWN";
   private static final String STATE_IS_REREGISTER      = "IS_REREGISTER";
   private static final String STATE_BACKUP_COMPLETED   = "BACKUP_COMPLETED";
+  private static final String STATE_DEVICE_NAME        = "DEVICE_NAME_ENTERED";
 
   private final RegistrationRepository registrationRepository;
+  private final LinkDeviceRepository linkDeviceRepository;
 
   public RegistrationViewModel(@NonNull SavedStateHandle savedStateHandle,
                                boolean isReregister,
                                @NonNull VerifyAccountRepository verifyAccountRepository,
                                @NonNull KbsRepository kbsRepository,
-                               @NonNull RegistrationRepository registrationRepository)
+                               @NonNull RegistrationRepository registrationRepository,
+                               @NonNull LinkDeviceRepository linkDeviceRepository)
   {
     super(savedStateHandle, verifyAccountRepository, kbsRepository, Util.getSecret(18));
 
     this.registrationRepository = registrationRepository;
+    this.linkDeviceRepository = linkDeviceRepository;
 
     setInitialDefaultValue(STATE_RESTORE_FLOW_SHOWN, false);
     setInitialDefaultValue(STATE_BACKUP_COMPLETED, false);
+    setInitialDefaultValue(STATE_DEVICE_NAME, "");
 
     this.savedState.set(STATE_IS_REREGISTER, isReregister);
   }
@@ -96,6 +103,15 @@ public final class RegistrationViewModel extends BaseRegistrationViewModel {
     return completed != null ? completed : false;
   }
 
+  public @NonNull String getDeviceName() {
+    //noinspection ConstantConditions
+    return savedState.get(STATE_DEVICE_NAME);
+  }
+
+  public void setDeviceName(@NonNull String deviceName) {
+    savedState.set(STATE_DEVICE_NAME, deviceName);
+  }
+
   @Override
   public Single<RequestVerificationCodeResponseProcessor> requestVerificationCode(@NonNull VerifyAccountRepository.Mode mode) {
     return super.requestVerificationCode(mode)
@@ -104,6 +120,21 @@ public final class RegistrationViewModel extends BaseRegistrationViewModel {
                     setFcmToken(processor.getResult().getFcmToken().orElse(null));
                   }
                 });
+  }
+
+  public Single<LinkDeviceRepository.LinkDeviceProgressProcessor> requestDeviceLinkCode() {
+    return linkDeviceRepository.requestDeviceLinkCode(getRegistrationData(), getDeviceName());
+  }
+
+  public Single<LinkDeviceRepository.NewDeviceRegistrationReturnProcessor> attemptDeviceLink(LinkDeviceRepository.LinkDeviceProgress progress) {
+    return linkDeviceRepository.attemptDeviceLink(progress)
+                               .flatMap(processor -> {
+                                 if (processor.hasResult()) {
+                                   return registrationRepository.registerAccountFromPrimaryDevice(getRegistrationData(), processor.getResult().getNewDeviceRegistrationResponse(), processor.getResult().getDeviceId(), getDeviceName())
+                                                                .map(LinkDeviceRepository.NewDeviceRegistrationReturnProcessor::new);
+                                 }
+                                 return Single.just(processor.asNewDeviceRegistrationReturnProcessor());
+                               });
   }
 
   @Override
@@ -172,7 +203,8 @@ public final class RegistrationViewModel extends BaseRegistrationViewModel {
                                                        isReregister,
                                                        new VerifyAccountRepository(ApplicationDependencies.getApplication()),
                                                        new KbsRepository(),
-                                                       new RegistrationRepository(ApplicationDependencies.getApplication())));
+                                                       new RegistrationRepository(ApplicationDependencies.getApplication()),
+                                                       new LinkDeviceRepository(ApplicationDependencies.getApplication())));
     }
   }
 }

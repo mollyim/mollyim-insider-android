@@ -54,6 +54,12 @@ public final class RegistrationCompleteFragment extends LoggingFragment {
       boolean needsProfile = Recipient.self().getProfileName().isEmpty() || !AvatarHelper.hasAvatar(activity, Recipient.self().getId());
       boolean needsPin     = !SignalStore.kbsValues().hasPin();
 
+      if (SignalStore.account().isLinkedDevice()) {
+        // This is a link, and not a new registration. Give the device a chance to sync the info from main before force-changing it.
+        needsProfile = false;
+        needsPin = false;
+      }
+
       Log.i(TAG, "Pin restore flow not required." +
                  " profile name: "   + Recipient.self().getProfileName().isEmpty() +
                  " profile avatar: " + !AvatarHelper.hasAvatar(activity, Recipient.self().getId()) +

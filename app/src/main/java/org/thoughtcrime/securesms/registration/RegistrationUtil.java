@@ -25,8 +25,8 @@ public final class RegistrationUtil {
   public static void maybeMarkRegistrationComplete(@NonNull Context context) {
     if (!SignalStore.registrationValues().isRegistrationComplete() &&
         SignalStore.account().isRegistered()                       &&
-        !Recipient.self().getProfileName().isEmpty()               &&
-        (SignalStore.kbsValues().hasPin() || SignalStore.kbsValues().hasOptedOut()))
+        ((!Recipient.self().getProfileName().isEmpty()               &&
+        (SignalStore.kbsValues().hasPin() || SignalStore.kbsValues().hasOptedOut())) || SignalStore.account().isLinkedDevice()))
     {
       Log.i(TAG, "Marking registration completed.", new Throwable());
       SignalStore.registrationValues().setRegistrationComplete();
