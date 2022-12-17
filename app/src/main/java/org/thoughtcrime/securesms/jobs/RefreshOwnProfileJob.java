@@ -99,6 +99,8 @@ public class RefreshOwnProfileJob extends BaseJob {
     ProfileAndCredential profileAndCredential = ProfileUtil.retrieveProfileSync(context, self, getRequestType(self), false);
     SignalServiceProfile profile              = profileAndCredential.getProfile();
 
+    SignalStore.registrationValues().clearNeedDownloadProfile();
+
     if (Util.isEmpty(profile.getName()) &&
         Util.isEmpty(profile.getAvatar()) &&
         Util.isEmpty(profile.getAbout()) &&
@@ -113,6 +115,7 @@ public class RefreshOwnProfileJob extends BaseJob {
         Log.w(TAG, "We don't have a name locally, either!");
       }
 
+      SignalStore.registrationValues().clearNeedDownloadProfileAvatar();
       return;
     }
 
