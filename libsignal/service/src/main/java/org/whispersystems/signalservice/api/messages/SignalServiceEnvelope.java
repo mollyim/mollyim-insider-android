@@ -65,6 +65,7 @@ public class SignalServiceEnvelope {
                                String uuid,
                                String destinationUuid,
                                boolean urgent,
+                               String updatedPni,
                                boolean story,
                                byte[] reportingToken)
   {
@@ -89,6 +90,10 @@ public class SignalServiceEnvelope {
       builder.setContent(ByteString.copyFrom(content));
     }
 
+    if (updatedPni != null) {
+      builder.setUpdatedPni(updatedPni);
+    }
+
     if (reportingToken != null) {
       builder.setReportingToken(ByteString.copyFrom(reportingToken));
     }
@@ -105,6 +110,7 @@ public class SignalServiceEnvelope {
                                String uuid,
                                String destinationUuid,
                                boolean urgent,
+                               String updatedPni,
                                boolean story,
                                byte[] reportingToken)
   {
@@ -114,6 +120,7 @@ public class SignalServiceEnvelope {
                                        .setServerTimestamp(serverReceivedTimestamp)
                                        .setDestinationUuid(destinationUuid)
                                        .setUrgent(urgent)
+                                       .setUpdatedPni(updatedPni)
                                        .setStory(story);
 
     if (uuid != null) {
@@ -259,6 +266,14 @@ public class SignalServiceEnvelope {
     return envelope.getUrgent();
   }
 
+  public boolean hasUpdatedPni() {
+    return envelope.hasUpdatedPni() && UuidUtil.isUuid(envelope.getUpdatedPni());
+  }
+
+  public String getUpdatedPni() {
+    return envelope.getUpdatedPni();
+  }
+
   public boolean isStory() {
     return envelope.getStory();
   }
@@ -279,6 +294,7 @@ public class SignalServiceEnvelope {
                                                                            .setServerReceivedTimestamp(getServerReceivedTimestamp())
                                                                            .setServerDeliveredTimestamp(getServerDeliveredTimestamp())
                                                                            .setUrgent(isUrgent())
+                                                                           .setUpdatedPni(getUpdatedPni())
                                                                            .setStory(isStory());
 
     if (getSourceUuid().isPresent()) {
@@ -330,6 +346,7 @@ public class SignalServiceEnvelope {
                                      proto.getServerGuid(),
                                      proto.getDestinationUuid(),
                                      proto.getUrgent(),
+                                     proto.getUpdatedPni(),
                                      proto.getStory(),
                                      proto.getReportingToken().toByteArray());
   }

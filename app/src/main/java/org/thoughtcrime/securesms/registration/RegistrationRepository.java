@@ -23,7 +23,9 @@ import org.thoughtcrime.securesms.database.RecipientTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
 import org.thoughtcrime.securesms.jobmanager.JobManager;
+import org.thoughtcrime.securesms.jobs.AllDataSyncRequestJob;
 import org.thoughtcrime.securesms.jobs.DirectoryRefreshJob;
+import org.thoughtcrime.securesms.jobs.RefreshOwnProfileJob;
 import org.thoughtcrime.securesms.jobs.RotateCertificateJob;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.notifications.NotificationIds;
@@ -120,25 +122,77 @@ public final class RegistrationRepository {
     }).subscribeOn(Schedulers.io());
   }
 
-  @WorkerThread
+  public Single<ServiceResponse<SignalServiceAccountManager.NewDeviceRegistrationReturn>> registerAccountFromPrimaryDevice(@NonNull RegistrationData registrationData,
+                                                                                                                           @NonNull SignalServiceAccountManager.NewDeviceRegistrationReturn response,
+                                                                                                                           int deviceId,
+                                                                                                                           String deviceName)
+  {
+    return Single.<ServiceResponse<SignalServiceAccountManager.NewDeviceRegistrationReturn>>fromCallable(() -> {
+      try {
+        // We have to set the deviceId before setting the identity keys, or they will throw for not being a linked device
+        // But we also have to set the identity keys before calling registerAccountInternal, otherwise it will generate new ones when creating the prekeys
+        SignalStore.account().setDeviceId(deviceId);
+        SignalStore.account().setAciIdentityKeysFromPrimaryDevice(response.getAciIdentity());
+        SignalStore.account().setPniIdentityKeyAfterChangeNumber(response.getPniIdentity());
+        SignalStore.registrationValues().markNeedDownloadProfileAndAvatar();
+        registerAccountInternal(new RegistrationData(registrationData.getCode(),
+                                                     response.getNumber(),
+                                                     registrationData.getPassword(),
+                                                     registrationData.getRegistrationId(),
+                                                     response.getProfileKey() == null ? ProfileKeyUtil.createNew() : response.getProfileKey(),
+                                                     registrationData.getFcmToken(),
+                                                     registrationData.getPniRegistrationId()),
+                                response.getAci(), response.getPni(), false, deviceId, deviceName, null, null);
+
+        JobManager jobManager = ApplicationDependencies.getJobManager();
+        jobManager.add(new RotateCertificateJob());
+        jobManager.add(new AllDataSyncRequestJob());
+        jobManager.add(new RefreshOwnProfileJob());
+
+        RotateSignedPreKeyListener.schedule(context);
+
+        return ServiceResponse.forResult(response, 200, null);
+      } catch (IOException e) {
+        return ServiceResponse.forUnknownError(e);
+      }
+    }).subscribeOn(Schedulers.io());
+  }
+
   private void registerAccountInternal(@NonNull RegistrationData registrationData,
                                        @NonNull VerifyAccountResponse response,
                                        @Nullable String pin,
                                        @Nullable KbsPinData kbsData)
       throws IOException
   {
-    ACI     aci    = ACI.parseOrThrow(response.getUuid());
-    PNI     pni    = PNI.parseOrThrow(response.getPni());
-    boolean hasPin = response.isStorageCapable();
+    SignalStore.registrationValues().clearNeedDownloadProfile();
+    SignalStore.registrationValues().clearNeedDownloadProfileAvatar();
+    registerAccountInternal(registrationData, ACI.parseOrThrow(response.getUuid()), PNI.parseOrThrow(response.getPni()), response.isStorageCapable(), SignalServiceAddress.DEFAULT_DEVICE_ID, null, pin, kbsData);
+  }
 
+  @WorkerThread
+  private void registerAccountInternal(@NonNull RegistrationData registrationData,
+                                       @NonNull ACI aci,
+                                       @NonNull PNI pni,
+                                       boolean hasPin,
+                                       int deviceId,
+                                       @Nullable String deviceName,
+                                       @Nullable String pin,
+                                       @Nullable KbsPinData kbsData)
+      throws IOException
+  {
     SignalStore.account().setAci(aci);
     SignalStore.account().setPni(pni);
+    SignalStore.account().setDeviceId(deviceId);
+    SignalStore.account().setDeviceName(deviceName);
+    if (deviceId != SignalServiceAddress.DEFAULT_DEVICE_ID) {
+      TextSecurePreferences.setMultiDevice(context, true);
+    }
 
     ApplicationDependencies.getProtocolStore().aci().sessions().archiveAllSessions();
     ApplicationDependencies.getProtocolStore().pni().sessions().archiveAllSessions();
     SenderKeyUtil.clearAllState();
 
-    SignalServiceAccountManager       accountManager   = AccountManagerFactory.createAuthenticated(context, aci, pni, registrationData.getE164(), SignalServiceAddress.DEFAULT_DEVICE_ID, registrationData.getPassword());
+    SignalServiceAccountManager       accountManager   = AccountManagerFactory.createAuthenticated(context, aci, pni, registrationData.getE164(), deviceId, registrationData.getPassword());
     SignalServiceAccountDataStoreImpl aciProtocolStore = ApplicationDependencies.getProtocolStore().aci();
     SignalServiceAccountDataStoreImpl pniProtocolStore = ApplicationDependencies.getProtocolStore().pni();
 
