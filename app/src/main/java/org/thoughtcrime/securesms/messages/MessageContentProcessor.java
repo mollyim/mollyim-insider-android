@@ -17,10 +17,17 @@ import com.mobilecoin.lib.exceptions.SerializationException;
 import org.signal.core.util.Hex;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.protocol.IdentityKeyPair;
+import org.signal.libsignal.protocol.InvalidMessageException;
+import org.signal.libsignal.protocol.InvalidKeyException;
 import org.signal.libsignal.protocol.SignalProtocolAddress;
 import org.signal.libsignal.protocol.ecc.ECPublicKey;
+import org.signal.libsignal.protocol.ecc.Curve;
 import org.signal.libsignal.protocol.message.DecryptionErrorMessage;
+import org.signal.libsignal.protocol.state.PreKeyRecord;
 import org.signal.libsignal.protocol.state.SessionRecord;
+import org.signal.libsignal.protocol.state.SignedPreKeyRecord;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.signal.ringrtc.CallId;
 import org.thoughtcrime.securesms.attachments.Attachment;
@@ -31,13 +38,17 @@ import org.thoughtcrime.securesms.attachments.UriAttachment;
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil;
 import org.thoughtcrime.securesms.contactshare.Contact;
 import org.thoughtcrime.securesms.contactshare.ContactModelMapper;
+import org.thoughtcrime.securesms.crypto.PreKeyUtil;
 import org.thoughtcrime.securesms.crypto.ProfileKeyUtil;
 import org.thoughtcrime.securesms.crypto.SecurityEvent;
+import org.thoughtcrime.securesms.crypto.storage.PreKeyMetadataStore;
+import org.thoughtcrime.securesms.crypto.storage.SignalServiceAccountDataStoreImpl;
 import org.thoughtcrime.securesms.database.AttachmentTable;
 import org.thoughtcrime.securesms.database.CallTable;
 import org.thoughtcrime.securesms.database.GroupReceiptTable;
 import org.thoughtcrime.securesms.database.GroupReceiptTable.GroupReceiptInfo;
 import org.thoughtcrime.securesms.database.GroupTable;
+import org.thoughtcrime.securesms.database.IdentityTable;
 import org.thoughtcrime.securesms.database.MessageTable;
 import org.thoughtcrime.securesms.database.MessageTable.InsertResult;
 import org.thoughtcrime.securesms.database.MessageTable.SyncMessageId;
@@ -91,6 +102,7 @@ import org.thoughtcrime.securesms.jobs.MultiDeviceStickerPackSyncJob;
 import org.thoughtcrime.securesms.jobs.NullMessageSendJob;
 import org.thoughtcrime.securesms.jobs.PaymentLedgerUpdateJob;
 import org.thoughtcrime.securesms.jobs.PaymentTransactionCheckJob;
+import org.thoughtcrime.securesms.jobs.PreKeysSyncJob;
 import org.thoughtcrime.securesms.jobs.ProfileKeySendJob;
 import org.thoughtcrime.securesms.jobs.PushProcessEarlyMessagesJob;
 import org.thoughtcrime.securesms.jobs.PushProcessMessageJob;
@@ -98,9 +110,11 @@ import org.thoughtcrime.securesms.jobs.RefreshAttributesJob;
 import org.thoughtcrime.securesms.jobs.RefreshOwnProfileJob;
 import org.thoughtcrime.securesms.jobs.ResendMessageJob;
 import org.thoughtcrime.securesms.jobs.RetrieveProfileJob;
+import org.thoughtcrime.securesms.jobs.RotateCertificateJob;
 import org.thoughtcrime.securesms.jobs.SendDeliveryReceiptJob;
 import org.thoughtcrime.securesms.jobs.SenderKeyDistributionSendJob;
 import org.thoughtcrime.securesms.jobs.StickerPackDownloadJob;
+import org.thoughtcrime.securesms.jobs.StorageSyncJob;
 import org.thoughtcrime.securesms.jobs.TrimThreadJob;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.linkpreview.LinkPreview;
@@ -171,10 +185,14 @@ import org.whispersystems.signalservice.api.messages.multidevice.ViewedMessage;
 import org.whispersystems.signalservice.api.messages.shared.SharedContact;
 import org.whispersystems.signalservice.api.payments.Money;
 import org.whispersystems.signalservice.api.push.DistributionId;
+import org.whispersystems.signalservice.api.push.PNI;
 import org.whispersystems.signalservice.api.push.ServiceId;
+import org.whispersystems.signalservice.api.push.ServiceIdType;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.SyncMessage;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.SyncMessage.PniChangeNumber;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.SyncMessage.PniIdentity;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -376,6 +394,8 @@ public class MessageContentProcessor {
             handleSynchronizeCallEvent(syncMessage.getCallEvent().get(), content.getTimestamp());
           }
         }
+        else if (syncMessage.getPniIdentity().isPresent())            handleSynchronizePniIdentity(syncMessage.getPniIdentity().get(), content.getTimestamp());
+        else if (syncMessage.getPniChangeNumber().isPresent())        handleSynchronizePniChangeNumber(content, syncMessage.getPniChangeNumber().get());
         else                                                          warn(String.valueOf(content.getTimestamp()), "Contains no known sync types...");
       } else if (content.getCallMessage().isPresent()) {
         log(String.valueOf(content.getTimestamp()), "Got call message...");
@@ -1248,6 +1268,8 @@ public class MessageContentProcessor {
     }
 
     SignalStore.storageService().setStorageKeyFromPrimary(keysMessage.getStorageService().get());
+
+    ApplicationDependencies.getJobManager().add(new StorageSyncJob());
   }
 
   private void handleSynchronizeContacts(@NonNull ContactsMessage contactsMessage, long envelopeTimestamp) throws IOException {
@@ -1600,6 +1622,75 @@ public class MessageContentProcessor {
     messageNotifier.setLastDesktopActivityTimestamp(envelopeTimestamp);
     messageNotifier.cancelDelayedNotifications();
     messageNotifier.updateNotification(context);
+  }
+
+  private void handleSynchronizePniIdentity(@NonNull PniIdentity pniIdentity, long envelopeTimestamp) throws IOException {
+    if (SignalStore.account().isLinkedDevice()) {
+      log(envelopeTimestamp, "Synchronize PNI identity.");
+    } else {
+      log(envelopeTimestamp, "Primary device ignores synchronize PNI identity.");
+      return;
+    }
+    try {
+      SignalStore.account().setPniIdentityKeyAfterChangeNumber(new IdentityKeyPair(new IdentityKey(pniIdentity.getPublicKey().toByteArray()), Curve.decodePrivatePoint(pniIdentity.getPrivateKey().toByteArray())));
+    } catch (InvalidKeyException e) {
+      warn(envelopeTimestamp, "Invalid identity key received in synchronize PNI identity", e);
+      throw new IOException(e);
+    }
+
+    PreKeysSyncJob.enqueue();
+  }
+
+  private void handleSynchronizePniChangeNumber(@NonNull SignalServiceContent content, @NonNull PniChangeNumber pniChangeNumber) throws IOException {
+    if (SignalStore.account().isLinkedDevice()) {
+      log(content.getTimestamp(), "Primary device changed number. Synchronizing.");
+    } else {
+      log(content.getTimestamp(), "Primary device should not receive number change updates. Ignoring.");
+      return;
+    }
+
+    if (!pniChangeNumber.hasIdentityKeyPair() || !pniChangeNumber.hasRegistrationId() || !pniChangeNumber.hasSignedPreKey() || content.getUpdatedPni() == null) {
+      warn(content.getTimestamp(), "Incomplete synchronize PNI number message. Ignoring.");
+      return;
+    }
+
+    try {
+      SignedPreKeyRecord signedPreKey = new SignedPreKeyRecord(pniChangeNumber.getSignedPreKey().toByteArray());
+
+      SignalServiceAccountDataStoreImpl pniProtocolStore = ApplicationDependencies.getProtocolStore().pni();
+      PreKeyMetadataStore pniMetadataStore = SignalStore.account().pniPreKeys();
+
+      SignalStore.account().setPni(PNI.parseOrThrow(content.getUpdatedPni()));
+      SignalStore.account().setPniRegistrationId(pniChangeNumber.getRegistrationId());
+      SignalStore.account().setPniIdentityKeyAfterChangeNumber(new IdentityKeyPair(pniChangeNumber.getIdentityKeyPair().toByteArray()));
+
+      pniProtocolStore.storeSignedPreKey(signedPreKey.getId(), signedPreKey);
+      List<PreKeyRecord> oneTimePreKeys = PreKeyUtil.generateAndStoreOneTimePreKeys(pniProtocolStore, pniMetadataStore);
+
+      pniMetadataStore.setActiveSignedPreKeyId(signedPreKey.getId());
+      ApplicationDependencies.getSignalServiceAccountManager().setPreKeys(ServiceIdType.PNI, pniProtocolStore.getIdentityKeyPair().getPublicKey(), signedPreKey, oneTimePreKeys);
+      pniMetadataStore.setSignedPreKeyRegistered(true);
+
+      pniProtocolStore.identities().saveIdentityWithoutSideEffects(
+        Recipient.self().getId(),
+        pniProtocolStore.getIdentityKeyPair().getPublicKey(),
+        IdentityTable.VerifiedStatus.VERIFIED,
+        true,
+        System.currentTimeMillis(),
+        true
+      );
+    } catch (InvalidMessageException e) {
+      warn(content.getTimestamp(), "Invalid signed prekey received while synchronize number change", e);
+      throw new IOException(e);
+    }
+
+    SignalStore.misc().setPniInitializedDevices(true);
+    ApplicationDependencies.getGroupsV2Authorization().clear();
+
+    ApplicationDependencies.closeConnections();
+    ApplicationDependencies.getIncomingMessageObserver();
+
+    ApplicationDependencies.getJobManager().add(new RotateCertificateJob());
   }
 
   private void handleStoryMessage(@NonNull SignalServiceContent content, @NonNull SignalServiceStoryMessage message, @NonNull Recipient senderRecipient, @NonNull Recipient threadRecipient) throws StorageFailedException {
