@@ -41,6 +41,7 @@ import org.thoughtcrime.securesms.components.settings.PreferenceViewHolder
 import org.thoughtcrime.securesms.components.settings.configure
 import org.thoughtcrime.securesms.keyvalue.PhoneNumberPrivacyValues
 import org.thoughtcrime.securesms.keyvalue.PhoneNumberPrivacyValues.PhoneNumberListingMode
+import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.preferences.widgets.PassphraseLockTriggerPreference
 import org.thoughtcrime.securesms.util.CommunicationActions
 import org.thoughtcrime.securesms.util.ConversationUtil
@@ -209,6 +210,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         title = DSLSettingsText.from(R.string.preferences__read_receipts),
         summary = DSLSettingsText.from(R.string.preferences__if_read_receipts_are_disabled_you_wont_be_able_to_see_read_receipts),
         isChecked = state.readReceipts,
+        isEnabled = SignalStore.account().isPrimaryDevice,
         onClick = {
           viewModel.setReadReceiptsEnabled(!state.readReceipts)
         }
@@ -218,10 +220,17 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         title = DSLSettingsText.from(R.string.preferences__typing_indicators),
         summary = DSLSettingsText.from(R.string.preferences__if_typing_indicators_are_disabled_you_wont_be_able_to_see_typing_indicators),
         isChecked = state.typingIndicators,
+        isEnabled = SignalStore.account().isPrimaryDevice,
         onClick = {
           viewModel.setTypingIndicatorsEnabled(!state.typingIndicators)
         }
       )
+
+      if (SignalStore.account().isLinkedDevice) {
+        textPref(
+          summary = DSLSettingsText.from(R.string.preferences__primary_only)
+        )
+      }
 
       dividerPref()
 

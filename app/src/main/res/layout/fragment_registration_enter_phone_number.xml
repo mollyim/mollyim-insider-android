@@ -135,6 +135,23 @@
             app:layout_constraintTop_toBottomOf="@+id/linearLayout"
             app:layout_constraintVertical_bias="0" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/link_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="48dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/RegistrationActivity_link_device"
+            style="@style/Signal.Widget.Button.Large.Secondary"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cancel_button"
+            app:layout_constraintVertical_bias="0" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </ScrollView>
