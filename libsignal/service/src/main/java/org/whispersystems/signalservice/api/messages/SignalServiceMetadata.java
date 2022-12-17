@@ -15,6 +15,7 @@ public final class SignalServiceMetadata {
   private final String               serverGuid;
   private final Optional<byte[]>     groupId;
   private final String               destinationUuid;
+  private final String               updatedPni;
 
   public SignalServiceMetadata(SignalServiceAddress sender,
                                int senderDevice,
@@ -24,7 +25,8 @@ public final class SignalServiceMetadata {
                                boolean needsReceipt,
                                String serverGuid,
                                Optional<byte[]> groupId,
-                               String destinationUuid)
+                               String destinationUuid,
+                               String updatedPni)
   {
     this.sender                   = sender;
     this.senderDevice             = senderDevice;
@@ -35,6 +37,7 @@ public final class SignalServiceMetadata {
     this.serverGuid               = serverGuid;
     this.groupId                  = groupId;
     this.destinationUuid          = destinationUuid != null ? destinationUuid : "";
+    this.updatedPni               = updatedPni;
   }
 
   public SignalServiceAddress getSender() {
@@ -71,5 +74,9 @@ public final class SignalServiceMetadata {
 
   public String getDestinationUuid() {
     return destinationUuid;
+  }
+
+  public String getUpdatedPni() {
+    return updatedPni;
   }
 }

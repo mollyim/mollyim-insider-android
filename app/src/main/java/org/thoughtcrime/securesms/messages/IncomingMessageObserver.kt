@@ -342,7 +342,8 @@ class IncomingMessageObserver(private val context: Application) {
       this.metadata.sealedSender,
       this.envelope.serverGuid,
       Optional.ofNullable(this.metadata.groupId),
-      this.metadata.destinationServiceId.toString()
+      this.metadata.destinationServiceId.toString(),
+      this.envelope.updatedPni
     )
 
     val contentProto = SignalServiceContentProto.newBuilder()

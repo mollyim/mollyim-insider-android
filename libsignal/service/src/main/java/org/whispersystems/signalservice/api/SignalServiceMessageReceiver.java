@@ -216,6 +216,7 @@ public class SignalServiceMessageReceiver {
                                              entity.getServerUuid(),
                                              entity.getDestinationUuid(),
                                              entity.isUrgent(),
+                                             entity.getUpdatedPni(),
                                              entity.isStory(),
                                              entity.getReportSpamToken());
       } else {
@@ -227,6 +228,7 @@ public class SignalServiceMessageReceiver {
                                              entity.getServerUuid(),
                                              entity.getDestinationUuid(),
                                              entity.isUrgent(),
+                                             entity.getUpdatedPni(),
                                              entity.isStory(),
                                              entity.getReportSpamToken());
       }
