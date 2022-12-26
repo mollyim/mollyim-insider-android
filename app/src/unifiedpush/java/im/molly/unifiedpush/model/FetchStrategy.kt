@@ -5,7 +5,7 @@ enum class FetchStrategy {
   REST,
 }
 
-fun FetchStrategy.toInt(): Int = when(this) {
+fun FetchStrategy.toInt(): Int = when (this) {
   FetchStrategy.WEBSOCKET -> 0
   FetchStrategy.REST -> 1
 }

@@ -119,7 +119,6 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
             iconEnd = DSLSettingsIcon.from(R.drawable.ic_copy_24),
             onClick = { writeTextToClipboard(requireContext(), "Server parameters", getServerParameters(state)) },
           )
-
         } else {
 
           clickPref(
@@ -128,7 +127,7 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
             iconEnd = DSLSettingsIcon.from(R.drawable.ic_copy_24),
             onClick = {
               writeTextToClipboard(requireContext(), "Account ID", state.device?.uuid ?: getString(R.string.UnifiedPushSettingsFragment__unknown))
-                      },
+            },
           )
 
           clickPref(
@@ -165,7 +164,6 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
       viewModel.setMollySocketUrl(input.text.toString())
     }
     alertDialog.show()
-
   }
 
   private val Float.toPx: Int
@@ -211,7 +209,7 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
   }
 
   private fun getMollySocketUrlIcon(state: UnifiedPushSettingsState): DSLSettingsIcon? {
-    if (state.mollySocketUrl.isNullOrBlank() || state.status == UnifiedPushStatus.PENDING ) return null
+    if (state.mollySocketUrl.isNullOrBlank() || state.status == UnifiedPushStatus.PENDING) return null
     return if (state.mollySocketOk) {
       DSLSettingsIcon.from(R.drawable.ic_check_20)
     } else {
