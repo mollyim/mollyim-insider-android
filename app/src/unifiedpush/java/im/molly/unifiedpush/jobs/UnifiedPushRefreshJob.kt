@@ -45,12 +45,12 @@ class UnifiedPushRefreshJob private constructor(parameters: Parameters) : BaseJo
         else -> {
           Log.w(TAG, "The registration status has changed!")
           status.saveStatus()
-          ApplicationContext().initializeFcmCheck()
+          ApplicationContext.getInstance().initializeFcmCheck()
           // TODO: alert user
         }
       }
     } else {
-      ApplicationContext().initializeFcmCheck()
+      ApplicationContext.getInstance().initializeFcmCheck()
       // TODO: alert user
     }
   }
