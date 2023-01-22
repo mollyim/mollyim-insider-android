@@ -1,16 +1,15 @@
 package im.molly.unifiedpush.receiver
 
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.os.PowerManager
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import im.molly.unifiedpush.components.settings.app.notifications.BROADCAST_NEW_ENDPOINT
+import im.molly.unifiedpush.events.UnifiedPushRegistrationEvent
 import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.UnifiedPushStatus
 import im.molly.unifiedpush.model.saveStatus
 import im.molly.unifiedpush.util.MollySocketRequest
 import im.molly.unifiedpush.util.UnifiedPushHelper
+import org.greenrobot.eventbus.EventBus
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
@@ -34,7 +33,7 @@ class UnifiedPushReceiver : MessagingReceiver() {
       when (SignalStore.unifiedpush().status) {
         UnifiedPushStatus.AIR_GAPED -> {
           // TODO: alert if air gaped and endpoint changes
-          LocalBroadcastManager.getInstance(context).sendBroadcast(Intent().apply { action = BROADCAST_NEW_ENDPOINT })
+          EventBus.getDefault().post(UnifiedPushRegistrationEvent)
         }
         in listOf(
           UnifiedPushStatus.INTERNAL_ERROR,
@@ -43,12 +42,12 @@ class UnifiedPushReceiver : MessagingReceiver() {
         ) -> {
           EXECUTOR.enqueue {
             MollySocketRequest.registerToMollySocketServer().saveStatus()
-            LocalBroadcastManager.getInstance(context).sendBroadcast(Intent().apply { action = BROADCAST_NEW_ENDPOINT })
+            EventBus.getDefault().post(UnifiedPushRegistrationEvent)
             // TODO: alert if status changes from Ok to something else
           }
         }
         else -> {
-          LocalBroadcastManager.getInstance(context).sendBroadcast(Intent().apply { action = BROADCAST_NEW_ENDPOINT })
+          EventBus.getDefault().post(UnifiedPushRegistrationEvent)
         }
       }
     }
@@ -63,6 +62,7 @@ class UnifiedPushReceiver : MessagingReceiver() {
     // called when this application is unregistered from receiving push messages
     // isPushAvailable becomes false => The websocket starts
     SignalStore.unifiedpush().endpoint = null
+    EventBus.getDefault().post(UnifiedPushRegistrationEvent)
   }
 
   override fun onMessage(context: Context, message: ByteArray, instance: String) {
