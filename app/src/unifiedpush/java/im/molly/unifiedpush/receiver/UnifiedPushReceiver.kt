@@ -9,6 +9,7 @@ import im.molly.unifiedpush.model.UnifiedPushStatus
 import im.molly.unifiedpush.model.saveStatus
 import im.molly.unifiedpush.util.MollySocketRequest
 import im.molly.unifiedpush.util.UnifiedPushHelper
+import im.molly.unifiedpush.util.UnifiedPushNotificationBuilder
 import org.greenrobot.eventbus.EventBus
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
@@ -32,18 +33,23 @@ class UnifiedPushReceiver : MessagingReceiver() {
       SignalStore.unifiedpush().endpoint = endpoint
       when (SignalStore.unifiedpush().status) {
         UnifiedPushStatus.AIR_GAPED -> {
-          // TODO: alert if air gaped and endpoint changes
           EventBus.getDefault().post(UnifiedPushRegistrationEvent)
+          UnifiedPushNotificationBuilder(context).setNotificationEndpointChangedAirGaped()
+        }
+        UnifiedPushStatus.OK -> {
+          EXECUTOR.enqueue {
+            MollySocketRequest.registerToMollySocketServer().saveStatus()
+            EventBus.getDefault().post(UnifiedPushRegistrationEvent)
+            UnifiedPushNotificationBuilder(context).setNotificationEndpointChangedError()
+          }
         }
         in listOf(
           UnifiedPushStatus.INTERNAL_ERROR,
           UnifiedPushStatus.MISSING_ENDPOINT,
-          UnifiedPushStatus.OK,
         ) -> {
           EXECUTOR.enqueue {
             MollySocketRequest.registerToMollySocketServer().saveStatus()
             EventBus.getDefault().post(UnifiedPushRegistrationEvent)
-            // TODO: alert if status changes from Ok to something else
           }
         }
         else -> {
@@ -55,7 +61,7 @@ class UnifiedPushReceiver : MessagingReceiver() {
 
   override fun onRegistrationFailed(context: Context, instance: String) {
     // called when the registration is not possible, eg. no network
-    // TODO: alert user the registration has failed
+    UnifiedPushNotificationBuilder(context).setNotificationRegistrationFailed()
   }
 
   override fun onUnregistered(context: Context, instance: String) {
