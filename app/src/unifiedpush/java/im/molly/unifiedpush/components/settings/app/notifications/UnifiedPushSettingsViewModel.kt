@@ -108,6 +108,8 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
       } ?: return
     } else {
       UnifiedPush.unregisterApp(application)
+      SignalStore.unifiedpush().airGaped = false
+      SignalStore.unifiedpush().mollySocketUrl = null
       processNewStatus()
     }
   }
