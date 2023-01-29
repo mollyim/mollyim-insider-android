@@ -33,7 +33,7 @@
     <string name="UnifiedPushSettingsFragment__status_summary_forbidden_endpoint">The endpoint is forbidden by the server</string>
     <string name="UnifiedPushSettingsFragment__status_summary_no_distributor">No UnifiedPush distributor installed</string>
     <string name="UnifiedPushSettingsFragment__status_summary_unknown_error">Unknown error</string>
-    <string name="UnifiedPushSettingsFragment__strategy_summary">The websocket strategy may drain a little more battery but reduces the number of requests sent to the provider.</string>
+    <string name="UnifiedPushSettingsFragment__strategy_summary">The websocket strategy may drain a little more battery but it reduces the number of requests sent to the push server.</string>
     <string name="UnifiedPushSettingsFragment__air_gaped_summary">Enable if your MollySocket server can\'t be reach on the Internet. You will have to register the connection manually</string>
     <string name="UnifiedPushNotificationBuilder__title">UnifiedPush</string>
     <string name="UnifiedPushNotificationBuilder__mollysocket_registration_changed">Your registration on MollySocket isn\'t valid anymore. Try to remove the linked device and register again.</string>
