@@ -103,7 +103,7 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
           clickPref(
             title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__server_parameters)),
             summary = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__click_to_copy)),
-            iconEnd = DSLSettingsIcon.from(R.drawable.ic_copy_24),
+            iconEnd = DSLSettingsIcon.from(R.drawable.symbol_copy_android_24),
             onClick = { writeTextToClipboard(requireContext(), "Server parameters", getServerParameters(state)) },
           )
         } else {
@@ -111,7 +111,7 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
           clickPref(
             title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__account_id)),
             summary = DSLSettingsText.from(state.device?.uuid ?: getString(R.string.UnifiedPushSettingsFragment__unknown)),
-            iconEnd = DSLSettingsIcon.from(R.drawable.ic_copy_24),
+            iconEnd = DSLSettingsIcon.from(R.drawable.symbol_copy_android_24),
             onClick = {
               writeTextToClipboard(requireContext(), "Account ID", state.device?.uuid ?: getString(R.string.UnifiedPushSettingsFragment__unknown))
             },
