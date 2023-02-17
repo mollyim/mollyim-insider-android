@@ -40,7 +40,8 @@ class UnifiedPushReceiver : MessagingReceiver() {
           EXECUTOR.enqueue {
             MollySocketRequest.registerToMollySocketServer().saveStatus()
             EventBus.getDefault().post(UnifiedPushRegistrationEvent)
-            UnifiedPushNotificationBuilder(context).setNotificationEndpointChangedError()
+            if (SignalStore.unifiedpush().status != UnifiedPushStatus.OK)
+              UnifiedPushNotificationBuilder(context).setNotificationEndpointChangedError()
           }
         }
         in listOf(
