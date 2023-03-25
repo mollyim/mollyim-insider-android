@@ -82,7 +82,7 @@ public class FcmReceiveService extends FirebaseMessagingService {
     Log.w(TAG, "onSendError()", e);
   }
 
-  private static void handleReceivedNotification(Context context, @Nullable RemoteMessage remoteMessage) {
+  public static void handleReceivedNotification(Context context, @Nullable RemoteMessage remoteMessage) {
     boolean enqueueSuccessful = false;
     boolean highPriority = false;
     try {
