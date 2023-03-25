@@ -138,6 +138,10 @@ android {
         androidTest {
             java.srcDirs += "$projectDir/src/testShared"
         }
+
+        main {
+            java.srcDirs += "$projectDir/src/unifiedpush/java"
+        }
     }
 
     compileOptions {
@@ -451,6 +455,8 @@ dependencies {
     implementation libs.androidx.asynclayoutinflater
     implementation libs.androidx.asynclayoutinflater.appcompat
     implementation libs.androidx.webkit
+
+    implementation 'com.github.UnifiedPush:android-connector:2.1.1'
 
     gmsImplementation (libs.firebase.messaging) {
         exclude group: 'com.google.firebase', module: 'firebase-core'
