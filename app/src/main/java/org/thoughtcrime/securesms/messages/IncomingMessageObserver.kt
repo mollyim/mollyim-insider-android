@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import kotlinx.collections.immutable.toImmutableSet
+import im.molly.unifiedpush.util.UnifiedPushHelper
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
@@ -203,12 +204,13 @@ class IncomingMessageObserver(private val context: Application) {
 
     val registered = SignalStore.account().isRegistered
     val fcmEnabled = SignalStore.account().fcmEnabled
+    val pushAvailable = UnifiedPushHelper.isPushAvailable()
     val hasNetwork = NetworkConstraint.isMet(context)
     val hasProxy = ApplicationDependencies.getNetworkManager().isProxyEnabled
     val forceWebsocket = SignalStore.internalValues().isWebsocketModeForced
     val decryptQueueEmpty = ApplicationDependencies.getJobManager().isQueueEmpty(PushDecryptMessageJob.QUEUE)
 
-    if (!fcmEnabled || forceWebsocket && registered && !isForegroundService) {
+    if (!pushAvailable || forceWebsocket && registered && !isForegroundService) {
       try {
         ForegroundServiceUtil.start(context, Intent(context, ForegroundService::class.java))
       } catch (e: UnableToStartException) {
@@ -225,13 +227,13 @@ class IncomingMessageObserver(private val context: Application) {
 
     val lastInteractionString = if (appVisibleSnapshot) "N/A" else timeIdle.toString() + " ms (" + (if (timeIdle < maxBackgroundTime) "within limit" else "over limit") + ")"
     val conclusion = registered &&
-      (appVisibleSnapshot || timeIdle < maxBackgroundTime || !fcmEnabled || keepAliveEntries.isNotEmpty()) &&
+      (appVisibleSnapshot || timeIdle < maxBackgroundTime || !pushAvailable || keepAliveEntries.isNotEmpty()) &&
       hasNetwork &&
       decryptQueueEmpty
 
     val needsConnectionString = if (conclusion) "Needs Connection" else "Does Not Need Connection"
 
-    Log.d(TAG, "[$needsConnectionString] Network: $hasNetwork, Foreground: $appVisibleSnapshot, Time Since Last Interaction: $lastInteractionString, FCM: $fcmEnabled, Stay open requests: $keepAliveEntries, Registered: $registered, Proxy: $hasProxy, Force websocket: $forceWebsocket, Decrypt Queue Empty: $decryptQueueEmpty")
+    Log.d(TAG, "[$needsConnectionString] Network: $hasNetwork, Foreground: $appVisibleSnapshot, Time Since Last Interaction: $lastInteractionString, FCM: $fcmEnabled, push: $pushAvailable, Stay open requests: $keepAliveEntries, Registered: $registered, Proxy: $hasProxy, Force websocket: $forceWebsocket, Decrypt Queue Empty: $decryptQueueEmpty")
     return conclusion
   }
 
