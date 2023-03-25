@@ -5,12 +5,19 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+
+import im.molly.unifiedpush.util.UnifiedPushHelper
+import org.signal.core.util.concurrent.SignalExecutors
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
+import org.thoughtcrime.securesms.keyvalue.SettingsValues.NotificationDeliveryMethod
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.preferences.widgets.NotificationPrivacyPreference
 import org.thoughtcrime.securesms.util.TextSecurePreferences
+import org.thoughtcrime.securesms.util.concurrent.SerialMonoLifoExecutor
 import org.thoughtcrime.securesms.util.livedata.Store
+import org.unifiedpush.android.connector.UnifiedPush
 
 class NotificationsSettingsViewModel(private val sharedPreferences: SharedPreferences) : ViewModel() {
 
@@ -24,6 +31,7 @@ class NotificationsSettingsViewModel(private val sharedPreferences: SharedPrefer
   private val store = Store(getState())
 
   val state: LiveData<NotificationsSettingsState> = store.stateLiveData
+  private val EXECUTOR = SerialMonoLifoExecutor(SignalExecutors.UNBOUNDED)
 
   fun setMessageNotificationsEnabled(enabled: Boolean) {
     SignalStore.settings().isMessageNotificationsEnabled = enabled
@@ -94,7 +102,31 @@ class NotificationsSettingsViewModel(private val sharedPreferences: SharedPrefer
     store.update { getState() }
   }
 
+  fun setNotificationDeliveryMethod(method: NotificationDeliveryMethod) {
+    SignalStore.settings().notificationDeliveryMethod = method
+    SignalStore.unifiedpush().enabled = method == NotificationDeliveryMethod.UNIFIEDPUSH
+    SignalStore.internalValues().isWebsocketModeForced = method == NotificationDeliveryMethod.WEBSOCKET
+    val context = ApplicationContext.getInstance()
+    if (method == NotificationDeliveryMethod.UNIFIEDPUSH) {
+      UnifiedPush.getDistributors(context).getOrNull(0)?.let {
+        store.update { getState() }
+        EXECUTOR.enqueue {
+          UnifiedPush.saveDistributor(context, it)
+          UnifiedPush.registerApp(context)
+          UnifiedPushHelper.initializeMollySocketLinkedDevice(context)
+        }
+        // Do not enable if there is no distributor
+      } ?: return
+    } else {
+      UnifiedPush.unregisterApp(context)
+      SignalStore.unifiedpush().airGaped = false
+      SignalStore.unifiedpush().mollySocketUrl = null
+    }
+    store.update { getState() }
+  }
+
   private fun getState(): NotificationsSettingsState = NotificationsSettingsState(
+    isLinkedDevice = SignalStore.account().isLinkedDevice,
     messageNotificationsState = MessageNotificationsState(
       notificationsEnabled = SignalStore.settings().isMessageNotificationsEnabled,
       sound = SignalStore.settings().messageNotificationSound,
@@ -111,7 +143,8 @@ class NotificationsSettingsViewModel(private val sharedPreferences: SharedPrefer
       ringtone = SignalStore.settings().callRingtone,
       vibrateEnabled = SignalStore.settings().isCallVibrateEnabled
     ),
-    notifyWhenContactJoinsSignal = SignalStore.settings().isNotifyWhenContactJoinsSignal
+    notifyWhenContactJoinsSignal = SignalStore.settings().isNotifyWhenContactJoinsSignal,
+    notificationDeliveryMethod = SignalStore.settings().notificationDeliveryMethod
   )
 
   class Factory(private val sharedPreferences: SharedPreferences) : ViewModelProvider.Factory {
