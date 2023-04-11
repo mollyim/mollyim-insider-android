@@ -87,7 +87,7 @@ class MollySocketLinkedDevice {
       SignalStore.account().aciIdentityKey
     )
 
-    return AccountManagerFactory.createUnauthenticated(context, number, SignalServiceAddress.DEFAULT_DEVICE_ID, password)
+    return AccountManagerFactory.getInstance().createUnauthenticated(context, number, SignalServiceAddress.DEFAULT_DEVICE_ID, password)
       .verifySecondaryDevice(
         verificationCode,
         registrationId,
@@ -104,7 +104,7 @@ class MollySocketLinkedDevice {
   @Throws(IOException::class)
   private fun generateAndRegisterPreKeys(number: String, deviceId: Int, password: String): Boolean? {
     val protocolStore = ApplicationDependencies.getProtocolStore().aci()
-    val accountManager = AccountManagerFactory.createAuthenticated(
+    val accountManager = AccountManagerFactory.getInstance().createAuthenticated(
       context,
       SignalStore.account().aci ?: return null,
       SignalStore.account().pni ?: return null,
