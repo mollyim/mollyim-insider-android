@@ -8,7 +8,6 @@ import im.molly.unifiedpush.util.UnifiedPushHelper
 import im.molly.unifiedpush.util.UnifiedPushNotificationBuilder
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.jobmanager.Data
 import org.thoughtcrime.securesms.jobmanager.Job
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.jobs.BaseJob
@@ -27,9 +26,7 @@ class UnifiedPushRefreshJob private constructor(parameters: Parameters) : BaseJo
       .build()
   )
 
-  override fun serialize(): Data {
-    return Data.EMPTY
-  }
+  override fun serialize(): ByteArray? { return null }
 
   override fun getFactoryKey(): String {
     return KEY
@@ -63,7 +60,7 @@ class UnifiedPushRefreshJob private constructor(parameters: Parameters) : BaseJo
   }
 
   class Factory : Job.Factory<UnifiedPushRefreshJob?> {
-    override fun create(parameters: Parameters, data: Data): UnifiedPushRefreshJob {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): UnifiedPushRefreshJob {
       return UnifiedPushRefreshJob(parameters)
     }
   }
