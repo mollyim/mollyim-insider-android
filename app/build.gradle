@@ -138,7 +138,6 @@ android {
 
         main {
             java.srcDirs += "$projectDir/src/unifiedpush/java"
-            res.srcDirs += "$projectDir/src/unifiedpush/res"
         }
     }
 
