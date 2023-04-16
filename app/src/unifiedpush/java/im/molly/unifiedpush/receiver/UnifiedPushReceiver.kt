@@ -82,7 +82,7 @@ class UnifiedPushReceiver : MessagingReceiver() {
     }
   }
 
-  fun messageRest(context: Context) {
+  private fun messageRest(context: Context) {
     EXECUTOR.enqueue {
       val wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
         newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG).apply {
