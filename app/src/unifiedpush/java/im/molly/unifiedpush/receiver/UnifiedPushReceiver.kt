@@ -16,9 +16,11 @@ import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.thoughtcrime.securesms.gcm.FcmFetchManager
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.util.FeatureFlags
 import org.thoughtcrime.securesms.util.concurrent.SerialMonoLifoExecutor
 import org.unifiedpush.android.connector.MessagingReceiver
 import java.util.Timer
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.schedule
 
 class UnifiedPushReceiver : MessagingReceiver() {
@@ -26,6 +28,8 @@ class UnifiedPushReceiver : MessagingReceiver() {
   private val TIMEOUT = 20_000L // 20secs
   private val WAKE_LOCK_TAG = "${UnifiedPushReceiver::class.java}::wake_lock"
   private val EXECUTOR = SerialMonoLifoExecutor(SignalExecutors.UNBOUNDED)
+  // Same than org.thoughtcrime.securesms.gcm.FcmReceiveService.FCM_FOREGROUND_INTERVAL
+  private val FOREGROUND_INTERVAL = TimeUnit.MINUTES.toMillis(3)
 
   override fun onNewEndpoint(context: Context, endpoint: String, instance: String) {
     Log.d(TAG, "New endpoint: $endpoint")
@@ -89,8 +93,13 @@ class UnifiedPushReceiver : MessagingReceiver() {
           acquire(5000L /*5secs*/)
         }
       }
+      val timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().lastFcmForegroundServiceTime
       val enqueueSuccessful = try {
-        if (Build.VERSION.SDK_INT >= 31) {
+        if (FeatureFlags.useFcmForegroundService()) {
+          SignalStore.misc().lastFcmForegroundServiceTime = System.currentTimeMillis()
+          FcmFetchManager.enqueue(context, true)
+        } else if (Build.VERSION.SDK_INT >= 31 && timeSinceLastRefresh > FOREGROUND_INTERVAL) {
+          SignalStore.misc().lastFcmForegroundServiceTime = System.currentTimeMillis()
           FcmFetchManager.enqueue(context, true)
         } else {
           FcmFetchManager.enqueue(context, false)
