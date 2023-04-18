@@ -76,7 +76,7 @@ object MollySocketRequest {
           device_id = it.deviceId,
           password = it.password,
           endpoint = endpoint,
-          strategy = SignalStore.unifiedpush().fetchStrategy.toString().lowercase()
+          strategy = "websocket"
         )
       } ?: return RegistrationStatus.NO_DEVICE
 
