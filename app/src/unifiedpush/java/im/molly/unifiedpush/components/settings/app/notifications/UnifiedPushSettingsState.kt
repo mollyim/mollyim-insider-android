@@ -1,6 +1,5 @@
 package im.molly.unifiedpush.components.settings.app.notifications
 
-import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.MollyDevice
 import im.molly.unifiedpush.model.UnifiedPushStatus
 
@@ -18,6 +17,5 @@ data class UnifiedPushSettingsState(
   val endpoint: String?,
   val mollySocketUrl: String?,
   val mollySocketOk: Boolean,
-  val fetchStrategy: FetchStrategy,
   var status: UnifiedPushStatus,
 )

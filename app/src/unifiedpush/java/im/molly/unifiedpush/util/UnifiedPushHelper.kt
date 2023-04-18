@@ -2,7 +2,6 @@ package im.molly.unifiedpush.util
 
 import android.content.Context
 import im.molly.unifiedpush.device.MollySocketLinkedDevice
-import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.UnifiedPushStatus
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.keyvalue.SignalStore
@@ -35,15 +34,6 @@ object UnifiedPushHelper {
   @JvmStatic
   fun isPushAvailable(): Boolean {
     return SignalStore.account().fcmEnabled || isUnifiedPushAvailable()
-  }
-
-  @JvmStatic
-  fun pushRequireForeground(): Boolean {
-    // (A) if (no FCM) and (no UnifiedPush) -> foreground
-    // (B) if (no FCM) and (UnifiedPush and websocket) -> foreground
-    // (A or B) if (no FCM) and (no UnifiedPush or (UnifiedPush and websocket) -> foreground
-    // not (A or B) = (FCM or (unifiedpush and REST)) -> no foreground
-    return !(SignalStore.account().fcmEnabled || (isUnifiedPushAvailable() && SignalStore.unifiedpush().fetchStrategy == FetchStrategy.REQUEST))
   }
 
   fun checkDistributorPresence(context: Context) {

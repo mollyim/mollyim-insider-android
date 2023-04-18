@@ -7,10 +7,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.UnifiedPushStatus
-import im.molly.unifiedpush.model.toFetchStrategy
-import im.molly.unifiedpush.model.toInt
 import org.greenrobot.eventbus.EventBus
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.components.settings.DSLConfiguration
@@ -72,23 +69,6 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
 
         dividerPref()
 
-        sectionHeaderPref(R.string.UnifiedPushSettingsFragment__strategy_header)
-
-        textPref(
-          summary = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__strategy_summary))
-        )
-
-        radioListPref(
-          title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__strategy)),
-          listItems = listOf(getString(R.string.UnifiedPushSettingsFragment__strategy_polling), getString(R.string.UnifiedPushSettingsFragment__strategy_request)).toTypedArray(),
-          selected = state.fetchStrategy.toInt(),
-          onSelected = {
-            viewModel.setFetchStrategy(it.toFetchStrategy())
-          },
-        )
-
-        dividerPref()
-
         switchPref(
           title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__air_gaped)),
           summary = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__air_gaped_summary)),
@@ -131,11 +111,7 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
   private fun getServerParameters(state: UnifiedPushSettingsState): String {
     val device = state.device ?: return getString(R.string.UnifiedPushSettingsFragment__no_device)
     val endpoint = state.endpoint ?: return getString(R.string.UnifiedPushSettingsFragment__no_endpoint)
-    val strategy = when (state.fetchStrategy) {
-      FetchStrategy.POLLING -> "websocket"
-      FetchStrategy.REQUEST -> "rest"
-    }
-    return "connection add ${device.uuid} ${device.deviceId} ${device.password} $endpoint $strategy"
+    return "connection add ${device.uuid} ${device.deviceId} ${device.password} $endpoint websocket"
   }
 
   private fun urlDialog(state: UnifiedPushSettingsState) {

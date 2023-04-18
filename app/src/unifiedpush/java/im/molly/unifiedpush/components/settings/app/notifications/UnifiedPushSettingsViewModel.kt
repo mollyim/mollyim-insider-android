@@ -6,7 +6,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import im.molly.unifiedpush.events.UnifiedPushRegistrationEvent
-import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.UnifiedPushStatus
 import im.molly.unifiedpush.model.saveStatus
 import im.molly.unifiedpush.util.MollySocketRequest
@@ -87,7 +86,6 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
       endpoint = SignalStore.unifiedpush().endpoint,
       mollySocketUrl = SignalStore.unifiedpush().mollySocketUrl,
       mollySocketOk = SignalStore.unifiedpush().mollySocketFound,
-      fetchStrategy = SignalStore.unifiedpush().fetchStrategy,
       status = status ?: SignalStore.unifiedpush().status,
     )
   }
@@ -119,11 +117,6 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
     processNewStatus()
   }
 
-  fun setFetchStrategy(strategy: FetchStrategy) {
-    SignalStore.unifiedpush().fetchStrategy = strategy
-    processNewStatus()
-  }
-
   fun setUnifiedPushDistributor(distributor: String) {
     UnifiedPush.saveDistributor(application, distributor)
     UnifiedPush.registerApp(application)
@@ -139,19 +132,6 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
       url
     }
     processNewStatus()
-  }
-
-  private fun restartServiceIfNeeded() {
-    ApplicationContext.getInstance().initializeFcmCheck()
-    if (
-      (UnifiedPushHelper.pushRequireForeground() && !ApplicationDependencies.getIncomingMessageObserver().isForegroundService) ||
-      (!UnifiedPushHelper.pushRequireForeground() && ApplicationDependencies.getIncomingMessageObserver().isForegroundService)
-    ) {
-      Log.d(TAG, "Restarting foreground service")
-      ApplicationDependencies.getIncomingMessageObserver().stopForegroundService()
-      ApplicationDependencies.closeConnections()
-      ApplicationDependencies.getIncomingMessageObserver()
-    }
   }
 
   private fun processNewStatus() {
@@ -171,7 +151,6 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
             SignalStore.unifiedpush().mollySocketFound = true
             MollySocketRequest.registerToMollySocketServer().saveStatus()
             status = SignalStore.unifiedpush().status
-            restartServiceIfNeeded()
           } else {
             SignalStore.unifiedpush().mollySocketFound = false
             status = SignalStore.unifiedpush().status
@@ -184,7 +163,6 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
       }
     } else {
       status = SignalStore.unifiedpush().status
-      restartServiceIfNeeded()
     }
     store.update { getState() }
   }

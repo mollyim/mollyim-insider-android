@@ -1,10 +1,7 @@
 package org.thoughtcrime.securesms.keyvalue
 
-import im.molly.unifiedpush.model.FetchStrategy
 import im.molly.unifiedpush.model.MollyDevice
 import im.molly.unifiedpush.model.UnifiedPushStatus
-import im.molly.unifiedpush.model.toFetchStrategy
-import im.molly.unifiedpush.model.toInt
 
 internal class UnifiedPushValues(store: KeyValueStore) : SignalStoreValues(store) {
 
@@ -14,7 +11,6 @@ internal class UnifiedPushValues(store: KeyValueStore) : SignalStoreValues(store
     private const val MOLLYSOCKET_PASSWORD = "unifiedpush.mollysocket.password"
     private const val MOLLYSOCKET_URL = "unifiedpush.mollysocket.url"
     private const val MOLLYSOCKET_OK = "unifiedpush.mollysocket.ok"
-    private const val MOLLYSOCKET_FETCH_METHOD = "unifiedpush.mollysocket.fetch_method"
     private const val MOLLYSOCKET_FORBIDDEN_UUID = "unifiedpush.mollysocket.forbidden_uuid"
     private const val MOLLYSOCKET_FORBIDDEN_ENDPOINT = "unifiedpush.mollysocket.forbidden_endpoint"
     private const val MOLLYSOCKET_INTERNAL_ERROR = "unifiedpush.mollysocket.internal_error"
@@ -56,10 +52,6 @@ internal class UnifiedPushValues(store: KeyValueStore) : SignalStoreValues(store
   var mollySocketUrl: String? by stringValue(MOLLYSOCKET_URL, null)
 
   var mollySocketFound: Boolean by booleanValue(MOLLYSOCKET_OK, false)
-
-  var fetchStrategy: FetchStrategy
-    get() = getInteger(MOLLYSOCKET_FETCH_METHOD, 0).toFetchStrategy()
-    set(value) = putInteger(MOLLYSOCKET_FETCH_METHOD, value.toInt())
 
   var forbiddenUuid: Boolean by booleanValue(MOLLYSOCKET_FORBIDDEN_UUID, true)
 

@@ -77,8 +77,7 @@ class IncomingMessageObserver(private val context: Application) {
   private val condition: Condition = lock.newCondition()
 
   private var appVisible = false
-  var isForegroundService = false
-      private set
+  private var isForegroundService = false
   private var lastInteractionTime: Long = System.currentTimeMillis()
 
   @Volatile
@@ -194,19 +193,15 @@ class IncomingMessageObserver(private val context: Application) {
       }
 
       keepAliveEntries = keepAliveTokens.entries.toImmutableSet()
-    }
-
-    val registered = SignalStore.account().isRegistered
-    val fcmEnabled = SignalStore.account().fcmEnabled
-    val pushRequireForeground = UnifiedPushHelper.pushRequireForeground()
+    }  val registered = SignalStore.account().isRegistered
+      val fcmEnabled = SignalStore.account().fcmEnabled
       val pushAvailable = UnifiedPushHelper.isPushAvailable()
       val hasNetwork = NetworkConstraint.isMet(context)
     val hasProxy = ApplicationDependencies.getNetworkManager().isProxyEnabled
     val forceWebsocket = SignalStore.internalValues().isWebsocketModeForced
     val decryptQueueEmpty = ApplicationDependencies.getJobManager().isQueueEmpty(PushDecryptMessageJob.QUEUE)
 
-    // Even if unifiedpush is enabled, we start in foreground so this observer is not killed
-      if ((pushRequireForeground || forceWebsocket) && registered && !isForegroundService) {
+      if ((!pushAvailable || forceWebsocket) && registered && !isForegroundService) {
         try {
           startWhenCapable(context, Intent(context, ForegroundService::class.java))
           isForegroundService = true
@@ -216,9 +211,6 @@ class IncomingMessageObserver(private val context: Application) {
       }
 
     val lastInteractionString = if (appVisibleSnapshot) "N/A" else timeIdle.toString() + " ms (" + (if (timeIdle < MAX_BACKGROUND_TIME) "within limit" else "over limit") + ")"
-    // If fcm or unifiedpush is enabled: the constantly running connection is not needed.
-      // The websocket strategy for unifiedpush adds an item in keepAliveTokens for 20secondes,
-      // So the connection is running for 20secondes.
       val conclusion = registered &&
         (appVisibleSnapshot || timeIdle < MAX_BACKGROUND_TIME || !pushAvailable || keepAliveEntries.isNotEmpty()) &&
       hasNetwork &&
@@ -226,7 +218,7 @@ class IncomingMessageObserver(private val context: Application) {
 
     val needsConnectionString = if (conclusion) "Needs Connection" else "Does Not Need Connection"
 
-    Log.d(TAG, "[$needsConnectionString] Network: $hasNetwork, Foreground: $appVisibleSnapshot, Time Since Last Interaction: $lastInteractionString, FCM: $fcmEnabled, pushRequireForeground: $pushRequireForeground, pushEnabled: $pushAvailable, Stay open requests: $keepAliveEntries, Registered: $registered, Proxy: $hasProxy, Force websocket: $forceWebsocket, Decrypt Queue Empty: $decryptQueueEmpty")
+    Log.d(TAG, "[$needsConnectionString] Network: $hasNetwork, Foreground: $appVisibleSnapshot, Time Since Last Interaction: $lastInteractionString, FCM: $fcmEnabled, pushEnabled: $pushAvailable, Stay open requests: $keepAliveEntries, Registered: $registered, Proxy: $hasProxy, Force websocket: $forceWebsocket, Decrypt Queue Empty: $decryptQueueEmpty")
     return conclusion
   }
 
