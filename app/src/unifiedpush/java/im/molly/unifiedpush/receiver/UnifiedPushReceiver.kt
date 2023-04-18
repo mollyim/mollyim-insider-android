@@ -79,8 +79,8 @@ class UnifiedPushReceiver : MessagingReceiver() {
   override fun onMessage(context: Context, message: ByteArray, instance: String) {
     if (UnifiedPushHelper.isUnifiedPushAvailable()) {
       when (SignalStore.unifiedpush().fetchStrategy) {
-        FetchStrategy.WEBSOCKET -> messageWebSocket()
-        FetchStrategy.REST -> messageRest(context)
+        FetchStrategy.POLLING -> messagePolling()
+        FetchStrategy.REQUEST -> messageRest(context)
       }
       Log.d(TAG, "New message")
     }
@@ -120,7 +120,7 @@ class UnifiedPushReceiver : MessagingReceiver() {
     }
   }
 
-  private fun messageWebSocket() {
+  private fun messagePolling() {
     ApplicationDependencies.getIncomingMessageObserver().registerKeepAliveToken(UnifiedPushReceiver::class.java.name)
     Timer().schedule(TIMEOUT) {
       ApplicationDependencies.getIncomingMessageObserver().removeKeepAliveToken(UnifiedPushReceiver::class.java.name)

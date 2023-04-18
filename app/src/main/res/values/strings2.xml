@@ -117,8 +117,8 @@
     <string name="UnifiedPushSettingsFragment__status_summary_mollysocket_server_not_found">MollySocket server not found</string>
     <string name="UnifiedPushSettingsFragment__strategy_header">Fetch Strategy</string>
     <string name="UnifiedPushSettingsFragment__strategy">Strategy</string>
-    <string name="UnifiedPushSettingsFragment__strategy_websocket">Websocket</string>
-    <string name="UnifiedPushSettingsFragment__strategy_rest">REST</string>
+    <string name="UnifiedPushSettingsFragment__strategy_polling">Polling</string>
+    <string name="UnifiedPushSettingsFragment__strategy_request">Request</string>
     <string name="UnifiedPushSettingsFragment__status_summary_internal_error">An internal Error occurred, please try again</string>
     <string name="UnifiedPushSettingsFragment__status_summary_forbidden_uuid">The account ID is refused by the server</string>
     <string name="UnifiedPushSettingsFragment__status_summary_linked_device_error">Cannot create the linked device.</string>
@@ -126,7 +126,7 @@
     <string name="UnifiedPushSettingsFragment__status_summary_forbidden_endpoint">The endpoint is forbidden by the server</string>
     <string name="UnifiedPushSettingsFragment__status_summary_no_distributor">No UnifiedPush distributor installed</string>
     <string name="UnifiedPushSettingsFragment__status_summary_unknown_error">Unknown error</string>
-    <string name="UnifiedPushSettingsFragment__strategy_summary">The websocket strategy may drain a little more battery but it reduces the number of requests sent to the push server.</string>
+    <string name="UnifiedPushSettingsFragment__strategy_summary">The polling strategy may drain a little more battery but it reduces the number of requests sent to the push server.</string>
     <string name="UnifiedPushSettingsFragment__air_gaped_summary">Enable if your MollySocket server can\'t be reach on the Internet. You will have to register the connection manually</string>
     <string name="UnifiedPushNotificationBuilder__title">UnifiedPush</string>
     <string name="UnifiedPushNotificationBuilder__mollysocket_registration_changed">Your registration on MollySocket isn\'t valid anymore. Try to remove the linked device and register again.</string>
