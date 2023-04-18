@@ -1,17 +1,17 @@
 package im.molly.unifiedpush.model
 
 enum class FetchStrategy {
-  WEBSOCKET,
-  REST,
+  POLLING,
+  REQUEST,
 }
 
 fun FetchStrategy.toInt(): Int = when (this) {
-  FetchStrategy.WEBSOCKET -> 0
-  FetchStrategy.REST -> 1
+  FetchStrategy.POLLING -> 0
+  FetchStrategy.REQUEST -> 1
 }
 
 fun Int.toFetchStrategy(): FetchStrategy = if (this == 1) {
-  FetchStrategy.REST
+  FetchStrategy.REQUEST
 } else {
-  FetchStrategy.WEBSOCKET
+  FetchStrategy.POLLING
 }

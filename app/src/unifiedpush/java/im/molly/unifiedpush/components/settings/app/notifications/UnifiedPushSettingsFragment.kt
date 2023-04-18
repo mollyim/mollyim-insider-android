@@ -80,7 +80,7 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
 
         radioListPref(
           title = DSLSettingsText.from(getString(R.string.UnifiedPushSettingsFragment__strategy)),
-          listItems = listOf(getString(R.string.UnifiedPushSettingsFragment__strategy_websocket), getString(R.string.UnifiedPushSettingsFragment__strategy_rest)).toTypedArray(),
+          listItems = listOf(getString(R.string.UnifiedPushSettingsFragment__strategy_polling), getString(R.string.UnifiedPushSettingsFragment__strategy_request)).toTypedArray(),
           selected = state.fetchStrategy.toInt(),
           onSelected = {
             viewModel.setFetchStrategy(it.toFetchStrategy())
@@ -132,8 +132,8 @@ class UnifiedPushSettingsFragment : DSLSettingsFragment(R.string.NotificationsSe
     val device = state.device ?: return getString(R.string.UnifiedPushSettingsFragment__no_device)
     val endpoint = state.endpoint ?: return getString(R.string.UnifiedPushSettingsFragment__no_endpoint)
     val strategy = when (state.fetchStrategy) {
-      FetchStrategy.WEBSOCKET -> "websocket"
-      FetchStrategy.REST -> "rest"
+      FetchStrategy.POLLING -> "websocket"
+      FetchStrategy.REQUEST -> "rest"
     }
     return "connection add ${device.uuid} ${device.deviceId} ${device.password} $endpoint $strategy"
   }

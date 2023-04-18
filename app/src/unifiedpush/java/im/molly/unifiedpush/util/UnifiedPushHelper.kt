@@ -43,7 +43,7 @@ object UnifiedPushHelper {
     // (B) if (no FCM) and (UnifiedPush and websocket) -> foreground
     // (A or B) if (no FCM) and (no UnifiedPush or (UnifiedPush and websocket) -> foreground
     // not (A or B) = (FCM or (unifiedpush and REST)) -> no foreground
-    return !(SignalStore.account().fcmEnabled || (isUnifiedPushAvailable() && SignalStore.unifiedpush().fetchStrategy == FetchStrategy.REST))
+    return !(SignalStore.account().fcmEnabled || (isUnifiedPushAvailable() && SignalStore.unifiedpush().fetchStrategy == FetchStrategy.REQUEST))
   }
 
   fun checkDistributorPresence(context: Context) {
