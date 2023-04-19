@@ -193,10 +193,12 @@ class IncomingMessageObserver(private val context: Application) {
       }
 
       keepAliveEntries = keepAliveTokens.entries.toImmutableSet()
-    }  val registered = SignalStore.account().isRegistered
-      val fcmEnabled = SignalStore.account().fcmEnabled
-      val pushAvailable = UnifiedPushHelper.isPushAvailable()
-      val hasNetwork = NetworkConstraint.isMet(context)
+    }
+
+    val registered = SignalStore.account().isRegistered
+    val fcmEnabled = SignalStore.account().fcmEnabled
+    val pushAvailable = UnifiedPushHelper.isPushAvailable()
+    val hasNetwork = NetworkConstraint.isMet(context)
     val hasProxy = ApplicationDependencies.getNetworkManager().isProxyEnabled
     val forceWebsocket = SignalStore.internalValues().isWebsocketModeForced
     val decryptQueueEmpty = ApplicationDependencies.getJobManager().isQueueEmpty(PushDecryptMessageJob.QUEUE)
