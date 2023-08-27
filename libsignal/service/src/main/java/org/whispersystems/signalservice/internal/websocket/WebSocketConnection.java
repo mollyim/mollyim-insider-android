@@ -79,6 +79,7 @@ public class WebSocketConnection extends WebSocketListener {
   private final boolean                                   allowStories;
   private final SignalServiceUrl                          serviceUrl;
 
+  private OkHttpClient okHttpClient;
   private WebSocket client;
 
   public WebSocketConnection(String name,
@@ -155,7 +156,7 @@ public class WebSocketConnection extends WebSocketListener {
         clientBuilder.addInterceptor(interceptor);
       }
 
-      OkHttpClient okHttpClient = clientBuilder.build();
+      okHttpClient = clientBuilder.build();
 
       Request.Builder requestBuilder = new Request.Builder().url(filledUri);
 
@@ -338,6 +339,11 @@ public class WebSocketConnection extends WebSocketListener {
     }
 
     cleanupAfterShutdown();
+
+    if (okHttpClient != null ) {
+      okHttpClient.dispatcher().executorService().shutdown();
+      okHttpClient = null;
+    }
 
     notifyAll();
   }

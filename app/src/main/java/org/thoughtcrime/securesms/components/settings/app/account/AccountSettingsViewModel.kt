@@ -18,7 +18,7 @@ class AccountSettingsViewModel : ViewModel() {
 
   private fun getCurrentState(): AccountSettingsState {
     return AccountSettingsState(
-      hasPin = SignalStore.svr().hasPin() && !SignalStore.svr().hasOptedOut(),
+      hasPin = (SignalStore.svr().hasPin() && !SignalStore.svr().hasOptedOut()) || SignalStore.storageService().hasStorageKeyFromPrimary(),
       pinRemindersEnabled = SignalStore.pinValues().arePinRemindersEnabled(),
       registrationLockEnabled = SignalStore.svr().isRegistrationLockEnabled,
       userUnregistered = TextSecurePreferences.isUnauthorizedReceived(ApplicationDependencies.getApplication()),

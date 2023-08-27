@@ -5,6 +5,9 @@ import com.google.protobuf.ByteString
 import com.mobilecoin.lib.exceptions.SerializationException
 import org.signal.core.util.Hex
 import org.signal.core.util.orNull
+import org.signal.libsignal.protocol.IdentityKeyPair
+import org.signal.libsignal.protocol.InvalidMessageException
+import org.signal.libsignal.protocol.state.SignedPreKeyRecord
 import org.signal.libsignal.protocol.util.Pair
 import org.signal.ringrtc.CallException
 import org.signal.ringrtc.CallLinkRootKey
@@ -13,11 +16,13 @@ import org.thoughtcrime.securesms.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.attachments.TombstoneAttachment
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil
 import org.thoughtcrime.securesms.contactshare.Contact
+import org.thoughtcrime.securesms.crypto.PreKeyUtil
 import org.thoughtcrime.securesms.crypto.SecurityEvent
 import org.thoughtcrime.securesms.database.CallLinkTable
 import org.thoughtcrime.securesms.database.CallTable
 import org.thoughtcrime.securesms.database.GroupReceiptTable
 import org.thoughtcrime.securesms.database.GroupTable
+import org.thoughtcrime.securesms.database.IdentityTable
 import org.thoughtcrime.securesms.database.MessageTable.MarkedMessageInfo
 import org.thoughtcrime.securesms.database.NoSuchMessageException
 import org.thoughtcrime.securesms.database.PaymentMetaDataUtil
@@ -49,6 +54,7 @@ import org.thoughtcrime.securesms.jobs.MultiDeviceStickerPackSyncJob
 import org.thoughtcrime.securesms.jobs.PushProcessEarlyMessagesJob
 import org.thoughtcrime.securesms.jobs.RefreshCallLinkDetailsJob
 import org.thoughtcrime.securesms.jobs.RefreshOwnProfileJob
+import org.thoughtcrime.securesms.jobs.RotateCertificateJob
 import org.thoughtcrime.securesms.jobs.StickerPackDownloadJob
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.linkpreview.LinkPreview
@@ -93,11 +99,14 @@ import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.MessageConstraintsUtil
 import org.thoughtcrime.securesms.util.TextSecurePreferences
 import org.thoughtcrime.securesms.util.Util
+import org.whispersystems.signalservice.api.account.PreKeyUpload
 import org.whispersystems.signalservice.api.crypto.EnvelopeMetadata
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer
 import org.whispersystems.signalservice.api.push.DistributionId
 import org.whispersystems.signalservice.api.push.ServiceId
 import org.whispersystems.signalservice.api.push.ServiceId.ACI
+import org.whispersystems.signalservice.api.push.ServiceId.PNI
+import org.whispersystems.signalservice.api.push.ServiceIdType
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
 import org.whispersystems.signalservice.api.storage.StorageKey
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos
@@ -121,6 +130,7 @@ import java.io.IOException
 import java.util.Optional
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
+
 
 object SyncMessageProcessor {
 
@@ -149,6 +159,7 @@ object SyncMessageProcessor {
       syncMessage.hasOutgoingPayment() -> handleSynchronizeOutgoingPayment(syncMessage.outgoingPayment, envelope.timestamp)
       syncMessage.hasKeys() && syncMessage.keys.hasStorageService() -> handleSynchronizeKeys(syncMessage.keys.storageService, envelope.timestamp)
       syncMessage.hasContacts() -> handleSynchronizeContacts(syncMessage.contacts, envelope.timestamp)
+      syncMessage.hasPniChangeNumber() -> handleSynchronizePniChangeNumber(syncMessage.pniChangeNumber, envelope.updatedPni, envelope.timestamp)
       syncMessage.hasCallEvent() -> handleSynchronizeCallEvent(syncMessage.callEvent, envelope.timestamp)
       syncMessage.hasCallLinkUpdate() -> handleSynchronizeCallLink(syncMessage.callLinkUpdate, envelope.timestamp)
       syncMessage.hasCallLogEvent() -> handleSynchronizeCallLogEvent(syncMessage.callLogEvent, envelope.timestamp)
@@ -1149,6 +1160,60 @@ object SyncMessageProcessor {
     val attachment: SignalServiceAttachmentPointer = contactsMessage.blob.toSignalServiceAttachmentPointer()
 
     ApplicationDependencies.getJobManager().add(MultiDeviceContactSyncJob(attachment))
+  }
+
+  @Throws(IOException::class)
+  private fun handleSynchronizePniChangeNumber(pniChangeNumber: SyncMessage.PniChangeNumber, updatedPni: String?, envelopeTimestamp: Long) {
+    if (SignalStore.account().isLinkedDevice) {
+      log(envelopeTimestamp, "Primary device changed number. Synchronizing.")
+    } else {
+      log(envelopeTimestamp, "Primary device should not receive number change updates. Ignoring.")
+      return
+    }
+
+    if (!pniChangeNumber.hasIdentityKeyPair() || !pniChangeNumber.hasRegistrationId() || !pniChangeNumber.hasSignedPreKey() || updatedPni == null) {
+      warn(envelopeTimestamp, "Incomplete synchronize PNI number message. Ignoring.")
+      return
+    }
+
+    try {
+      val signedPreKey = SignedPreKeyRecord(pniChangeNumber.signedPreKey.toByteArray())
+
+      val pniProtocolStore = ApplicationDependencies.getProtocolStore().pni()
+      val pniMetadataStore = SignalStore.account().pniPreKeys
+
+      SignalStore.account().setPni(PNI.parseOrThrow(updatedPni))
+      SignalStore.account().pniRegistrationId = pniChangeNumber.registrationId
+      SignalStore.account().setPniIdentityKeyAfterChangeNumber(IdentityKeyPair(pniChangeNumber.identityKeyPair.toByteArray()))
+
+      pniProtocolStore.storeSignedPreKey(signedPreKey.id, signedPreKey)
+      val oneTimePreKeys = PreKeyUtil.generateAndStoreOneTimeEcPreKeys(pniProtocolStore, pniMetadataStore)
+
+      pniMetadataStore.activeSignedPreKeyId = signedPreKey.id
+      ApplicationDependencies.getSignalServiceAccountManager().setPreKeys(PreKeyUpload(ServiceIdType.PNI, pniProtocolStore.identityKeyPair.publicKey, signedPreKey, oneTimePreKeys, null, null))
+      pniMetadataStore.isSignedPreKeyRegistered = true
+
+      pniProtocolStore.identities().saveIdentityWithoutSideEffects(
+        Recipient.self().id,
+        Recipient.self().serviceId.get(),
+        pniProtocolStore.identityKeyPair.publicKey,
+        IdentityTable.VerifiedStatus.VERIFIED,
+        true,
+        System.currentTimeMillis(),
+        true
+      )
+    } catch (e: InvalidMessageException) {
+      warn(envelopeTimestamp, "Invalid signed prekey received while synchronize number change", e)
+      throw IOException(e)
+    }
+
+    SignalStore.misc().setPniInitializedDevices(true)
+    ApplicationDependencies.getGroupsV2Authorization().clear()
+
+    ApplicationDependencies.closeConnections()
+    ApplicationDependencies.getIncomingMessageObserver()
+
+    ApplicationDependencies.getJobManager().add(RotateCertificateJob())
   }
 
   private fun handleSynchronizeCallEvent(callEvent: SyncMessage.CallEvent, envelopeTimestamp: Long) {

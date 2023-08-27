@@ -36,6 +36,7 @@ message SignalServiceEnvelopeProto {
   optional bool   urgent                   = 12 [default = true];
   optional bool   story                    = 13;
   optional bytes  reportingToken           = 14;
+  optional string updatedPni               = 2000;
 }
 
 message MetadataProto {
@@ -48,6 +49,7 @@ message MetadataProto {
   optional string       serverGuid               = 7;
   optional bytes        groupId                  = 8;
   optional string       destinationUuid          = 9;
+  optional string       updatedPni               = 2000;
 }
 
 message AddressProto {
